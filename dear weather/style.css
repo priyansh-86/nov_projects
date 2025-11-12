@@ -1,0 +1,213 @@
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+/* --- Animations --- */
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Particle lift animation */
+@keyframes rise {
+    0% {
+        transform: translateY(110vh) scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-10vh) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Class to trigger animation */
+.animate-in {
+    animation: slideUpFadeIn 0.5s ease-out forwards;
+}
+
+
+/* --- Base Styles --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    transition: background 0.7s ease;
+    overflow-x: hidden; /* Hide horizontal scroll */
+}
+
+/* --- Dynamic Backgrounds --- */
+.bg-clear-day { background: linear-gradient(120deg, #4a90e2 0%, #81c7f5 100%); }
+.bg-clear-night { background: linear-gradient(to top, #09203f 0%, #2c3e50 100%); }
+.bg-clouds { background: linear-gradient(120deg, #bdc3c7 0%, #7f8c8d 100%); }
+.bg-rainy { background: linear-gradient(to top, #6b778d 0%, #3a4b5b 100%); }
+.bg-snowy { background: linear-gradient(120deg, #e6e9f0 0%, #eef1f5 100%); }
+.bg-mist { background: linear-gradient(120deg, #d3d3d3 0%, #b0b0b0 100%); }
+
+/* --- Particle Container --- */
+#particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Behind content */
+    overflow: hidden;
+    pointer-events: none; /* Allows clicking through */
+}
+.particle {
+    position: absolute;
+    bottom: 0; /* Start from bottom */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    filter: blur(2px);
+    animation: rise 15s linear infinite; /* Default duration */
+    opacity: 0;
+}
+
+
+/* --- Typography --- */
+h1, h3 {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    letter-spacing: 0.5px;
+}
+.container {
+    z-index: 2; /* Ensure content is above particles */
+    position: relative;
+}
+
+/* --- Autocomplete Container --- */
+#autocomplete-container {
+    position: absolute;
+    width: calc(100% - 78px); /* Full width minus search button */
+    z-index: 1000;
+    margin-top: -1rem;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+#autocomplete-container .list-group-item {
+    cursor: pointer;
+}
+#autocomplete-container .list-group-item:hover {
+    background-color: #f0f0f0;
+}
+
+
+/* --- Main Glass Card (ENHANCED) --- */
+.glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1.25rem;
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+}
+
+/* --- Typography Inside Card --- */
+#city-name {
+    font-weight: 600;
+    font-size: 1.75rem;
+    margin-bottom: 0;
+}
+#temperature {
+    font-size: 5rem;
+    font-weight: 300;
+    margin: -10px 0;
+    color: #111;
+}
+#weather-description {
+    font-size: 1.2rem;
+    font-weight: 400;
+    text-transform: capitalize;
+    color: #333;
+    margin-bottom: 0;
+}
+#feels-like {
+    font-size: 0.9rem;
+    color: #555;
+}
+#weather-icon {
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
+}
+.card .row p {
+    font-size: 0.9rem;
+    color: #222;
+    margin-bottom: 0.75rem;
+}
+.card .row p strong {
+    color: #000;
+}
+
+/* --- 5-Day Forecast Card --- */
+.forecast-card-item {
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border-radius: 1rem;
+    padding: 10px 5px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.forecast-card-item:hover {
+    transform: scale(1.05);
+    background-color: rgba(255, 255, 255, 0.6);
+}
+.forecast-card-item h6 {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.forecast-card-item p {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+
+/* --- Other UI Elements --- */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: all 0.3s ease;
+}
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: scale(1.02);
+}
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    border-color: #007bff;
+}
+.fav-city-btn {
+    margin: 2px 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: white;
+    transition: all 0.3s ease;
+}
+.fav-city-btn:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #000;
+    transform: scale(1.05);
+}
+#save-city-button.active {
+    background-color: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+}
+
+/* --- Custom Scrollbar --- */
+html { scrollbar-width: thin; scrollbar-color: #007bff #f1f1f1; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: #007bff; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #0056b3; }

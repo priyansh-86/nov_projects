@@ -13,19 +13,21 @@
     }
 }
 
-/* Particle lift animation */
-@keyframes rise {
-    0% {
-        transform: translateY(110vh) scale(0.5);
-        opacity: 0;
-    }
-    50% {
-        opacity: 0.8;
-    }
-    100% {
-        transform: translateY(-10vh) scale(1);
-        opacity: 0;
-    }
+/* (NEW) Wind icon animation */
+@keyframes wind-blow {
+    0% { transform: translateX(-1px); }
+    50% { transform: translateX(2px); }
+    100% { transform: translateX(-1px); }
+}
+
+/* (NEW) Sun icon glow animations */
+@keyframes sunrise-glow {
+    from { text-shadow: 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ffdd1c; }
+    to { text-shadow: 0 0 6px #fff, 0 0 8px #ffdd1c, 0 0 10px #ffdd1c; }
+}
+@keyframes sunset-glow {
+    from { text-shadow: 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ff8000; }
+    to { text-shadow: 0 0 6px #fff, 0 0 8px #ff8000, 0 0 10px #ff8000; }
 }
 
 /* Class to trigger animation */
@@ -38,50 +40,34 @@
 body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
-    transition: background 0.7s ease;
     overflow-x: hidden; /* Hide horizontal scroll */
+    color: #fff; /* (NEW) Default text color to white for Vanta */
 }
 
-/* --- Dynamic Backgrounds --- */
-.bg-clear-day { background: linear-gradient(120deg, #4a90e2 0%, #81c7f5 100%); }
-.bg-clear-night { background: linear-gradient(to top, #09203f 0%, #2c3e50 100%); }
-.bg-clouds { background: linear-gradient(120deg, #bdc3c7 0%, #7f8c8d 100%); }
-.bg-rainy { background: linear-gradient(to top, #6b778d 0%, #3a4b5b 100%); }
-.bg-snowy { background: linear-gradient(120deg, #e6e9f0 0%, #eef1f5 100%); }
-.bg-mist { background: linear-gradient(120deg, #d3d3d3 0%, #b0b0b0 100%); }
-
-/* --- Particle Container --- */
-#particle-container {
+/* --- (NEW) Vanta.js Background Container --- */
+#vanta-bg {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     z-index: 0; /* Behind content */
-    overflow: hidden;
-    pointer-events: none; /* Allows clicking through */
-}
-.particle {
-    position: absolute;
-    bottom: 0; /* Start from bottom */
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    width: 10px;
-    height: 10px;
-    filter: blur(2px);
-    animation: rise 15s linear infinite; /* Default duration */
-    opacity: 0;
 }
 
 
 /* --- Typography --- */
 h1, h3 {
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Darker shadow for better contrast */
     letter-spacing: 0.5px;
 }
 .container {
-    z-index: 2; /* Ensure content is above particles */
+    z-index: 2; /* Ensure content is above Vanta */
     position: relative;
+}
+/* (NEW) White text for toggle switch */
+.form-check-label {
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 /* --- Autocomplete Container --- */
@@ -97,6 +83,7 @@ h1, h3 {
 }
 #autocomplete-container .list-group-item {
     cursor: pointer;
+    color: #333; /* (NEW) Ensure text is readable */
 }
 #autocomplete-container .list-group-item:hover {
     background-color: #f0f0f0;
@@ -111,13 +98,47 @@ h1, h3 {
     backdrop-filter: blur(15px);
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
+    color: #000; /* (NEW) Reset text color inside card */
 }
+
+/* --- (NEW) Share/Save Buttons Container --- */
+.card-buttons {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 8px;
+}
+.card-buttons button {
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #333;
+    transition: all 0.2s ease;
+}
+.card-buttons button:hover {
+    background-color: rgba(255, 255, 255, 0.7);
+    transform: scale(1.1);
+}
+#save-city-button.active {
+    background-color: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+}
+
 
 /* --- Typography Inside Card --- */
 #city-name {
     font-weight: 600;
     font-size: 1.75rem;
     margin-bottom: 0;
+    margin-top: 20px; /* Space for buttons */
 }
 #temperature {
     font-size: 5rem;
@@ -139,14 +160,40 @@ h1, h3 {
 #weather-icon {
     filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
 }
-.card .row p {
+
+/* (NEW) A-to-Z details with icons */
+.details-col p {
     font-size: 0.9rem;
     color: #222;
     margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
 }
-.card .row p strong {
+.details-col p i {
+    font-size: 1.1rem;
+    margin-right: 10px;
+    min-width: 20px;
+    text-align: center;
+    color: #007bff; /* Icon color */
+}
+.details-col p strong {
     color: #000;
+    margin-right: 5px;
 }
+/* (NEW) Icon Animation Classes */
+#wind-icon {
+    animation: wind-blow 3s linear infinite;
+    color: #555;
+}
+.sunrise-anim {
+    color: #ffdd1c !important;
+    animation: sunrise-glow 2s infinite alternate ease-in-out;
+}
+.sunset-anim {
+    color: #ff8000 !important;
+    animation: sunset-glow 2s infinite alternate ease-in-out;
+}
+
 
 /* --- 5-Day Forecast Card --- */
 .forecast-card-item {
@@ -157,6 +204,7 @@ h1, h3 {
     padding: 10px 5px;
     text-align: center;
     transition: all 0.3s ease;
+    color: #000; /* Reset color */
 }
 .forecast-card-item:hover {
     transform: scale(1.05);
@@ -198,11 +246,6 @@ h1, h3 {
     background-color: rgba(255, 255, 255, 0.5);
     color: #000;
     transform: scale(1.05);
-}
-#save-city-button.active {
-    background-color: #ffc107;
-    color: #000;
-    border-color: #ffc107;
 }
 
 /* --- Custom Scrollbar --- */

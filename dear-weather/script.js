@@ -1,14 +1,14 @@
-// --- 1. API Configuration ---
-// (API keys yahaan se hata di gayi hain. Ab yeh server par hain)
+
 
 // --- 2. Global Variables ---
 let currentUnit = 'metric';
 let favouriteCities = [];
 let currentDisplayedCity = null;
 let autocompleteRequestTimeout;
+let vantaEffect = null; // (NEW) Vanta effect ko store karne ke liye
 
 // --- 3. Selecting HTML Elements ---
-const particleContainer = document.getElementById("particle-container");
+const vantaBg = document.getElementById("vanta-bg"); // (NEW) Vanta background
 const searchInput = document.getElementById("search-input");
 const searchButton = document.getElementById("search-button");
 const autocompleteContainer = document.getElementById("autocomplete-container");
@@ -16,6 +16,7 @@ const detectLocationButton = document.getElementById("detect-location-button");
 const unitToggle = document.getElementById("unit-toggle");
 const unitLabel = document.getElementById("unit-label");
 const saveCityButton = document.getElementById("save-city-button");
+const shareButton = document.getElementById("share-button"); // (NEW) Share button
 const favouritesContainer = document.getElementById("favourites-container");
 const loadingSpinner = document.getElementById("loading-spinner");
 const errorMessage = document.getElementById("error-message");
@@ -27,6 +28,7 @@ const weatherDescription = document.getElementById("weather-description");
 const feelsLike = document.getElementById("feels-like");
 const humidity = document.getElementById("humidity");
 const windSpeed = document.getElementById("wind-speed");
+const windIcon = document.getElementById("wind-icon"); // (NEW) Wind icon
 const sunriseEl = document.getElementById("sunrise");
 const sunsetEl = document.getElementById("sunset");
 const pressure = document.getElementById("pressure");
@@ -39,7 +41,8 @@ const forecastRow = document.getElementById("forecast-row");
 // --- 4. Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
     loadFavourites();
-    createParticles(30); 
+    // Default Vanta background (Globe)
+    updateDynamicBackground("Clear", "01d"); // "01d" = clear day
 });
 searchButton.addEventListener("click", () => {
     const city = searchInput.value;
@@ -80,15 +83,15 @@ unitToggle.addEventListener("change", () => {
     }
 });
 saveCityButton.addEventListener("click", toggleFavourite);
+shareButton.addEventListener("click", shareWeather); // (NEW) Share button event
 
 
-// --- 5. Main Weather Fetching Function (MODIFIED) ---
+// --- 5. Main Weather Fetching Function ---
 function fetchWeather(city = null, lat = null, lon = null) {
     showLoading();
     
     let weatherUrl, forecastUrl;
     
-    // (MODIFIED) URLs ab humare apne serverless functions ko point kar rahe hain
     if (city) {
         weatherUrl = `/api/currentWeather?q=${city}&units=${currentUnit}`;
         forecastUrl = `/api/forecast?q=${city}&units=${currentUnit}`;
@@ -99,7 +102,6 @@ function fetchWeather(city = null, lat = null, lon = null) {
 
     Promise.all([fetch(weatherUrl), fetch(forecastUrl)])
         .then(([weatherRes, forecastRes]) => {
-            // Hum Vercel se response check kar rahe hain
             if (!weatherRes.ok) return weatherRes.json().then(err => { throw new Error(err.error || "Current weather not found"); });
             if (!forecastRes.ok) return forecastRes.json().then(err => { throw new Error(err.error || "Forecast data not found"); });
             return Promise.all([weatherRes.json(), forecastRes.json()]);
@@ -122,14 +124,14 @@ function fetchWeather(city = null, lat = null, lon = null) {
 function updateWeatherUI(data) {
     errorMessage.classList.add("d-none");
     
-    let rawCelsiusTemp;
-    if (currentUnit === 'metric') {
-        rawCelsiusTemp = data.main.temp;
-    } else {
-        rawCelsiusTemp = (data.main.temp - 32) * 5 / 9;
-    }
-    updateLiftAnimation(rawCelsiusTemp); 
+    // (NEW) Wind Speed Animation
+    const windSpeedKmh = currentUnit === 'metric' ? (data.wind.speed * 3.6) : (data.wind.speed * 1.60934 * 3.6);
+    // Speed jitni zyaada, duration utna kam (fast animation)
+    // 5 km/h = 3s duration, 45 km/h = 1s duration
+    const windAnimDuration = Math.max(0.5, 3.5 - (windSpeedKmh / 15));
+    windIcon.style.animationDuration = `${windAnimDuration}s`;
     
+    // Units
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
     const speedUnit = currentUnit === 'metric' ? 'km/h' : 'mph';
     const distUnit = currentUnit === 'metric' ? 'km' : 'mi';
@@ -137,6 +139,7 @@ function updateWeatherUI(data) {
     const windSpeedVal = currentUnit === 'metric' ? (data.wind.speed * 3.6).toFixed(1) : data.wind.speed.toFixed(1);
     const visibilityVal = currentUnit === 'metric' ? (data.visibility / 1000).toFixed(1) : (data.visibility * 0.000621371).toFixed(1);
 
+    // Update Text
     cityName.textContent = data.name;
     temperature.textContent = `${Math.round(data.main.temp)}${tempUnit}`;
     weatherDescription.textContent = data.weather[0].description;
@@ -149,10 +152,16 @@ function updateWeatherUI(data) {
     tempMax.textContent = `${Math.round(data.main.temp_max)}${tempUnit}`;
     sunriseEl.textContent = formatTime(data.sys.sunrise, data.timezone);
     sunsetEl.textContent = formatTime(data.sys.sunset, data.timezone);
+    
+    // Update Icon
     const iconCode = data.weather[0].icon;
     weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
     weatherIcon.alt = data.weather[0].description;
+    
+    // (NEW) Update Vanta Background
     updateDynamicBackground(data.weather[0].main, iconCode);
+
+    // Show Card
     weatherCard.classList.remove("d-none");
     weatherCard.classList.add("animate-in");
 }
@@ -196,46 +205,136 @@ function updateForecastUI(data) {
     forecastRow.classList.add("animate-in");
 }
 
+// --- 7. (NEW) Vanta.js Dynamic Background Function ---
 function updateDynamicBackground(condition, iconCode) {
-    const body = document.body;
-    body.className = "";
+    // Purana effect destroy karo (agar hai toh)
+    if (vantaEffect) {
+        vantaEffect.destroy();
+    }
+
     const isNight = iconCode.endsWith('n');
-    
+
     if (isNight) {
-        body.classList.add('bg-clear-night');
+        // Raat ke liye (Stars/Net)
+        vantaEffect = VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x88aaff, // Halka blue stars
+            backgroundColor: 0x030f2a, // Dark blue space
+            points: 10.00,
+            maxDistance: 20.00,
+            spacing: 15.00
+        });
     } else {
+        // Din ke liye
         switch (condition.toLowerCase()) {
-            case 'clear': body.classList.add('bg-clear-day'); break;
-            case 'clouds': body.classList.add('bg-clouds'); break;
+            case 'clear':
+                // (NEW) Earth Globe effect
+                vantaEffect = VANTA.GLOBE({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    color: 0x3f9eff,
+                    color2: 0xffffff,
+                    backgroundColor: 0x050f23, // Space black
+                    size: 0.8
+                });
+                break;
+            case 'clouds':
+                // (NEW) Clouds effect
+                vantaEffect = VANTA.CLOUDS({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    skyColor: 0x90b0d8,
+                    cloudColor: 0xc0d0e8,
+                    sunColor: 0xffa040
+                });
+                break;
             case 'rain':
             case 'drizzle':
-            case 'thunderstorm': body.classList.add('bg-rainy'); break;
-            case 'snow': body.classList.add('bg-snowy'); break;
+            case 'thunderstorm':
+                // (NEW) Waves effect
+                vantaEffect = VANTA.WAVES({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    color: 0x3a4b5b, // Dark stormy color
+                    shininess: 25.00,
+                    waveHeight: 10.00,
+                    waveSpeed: 0.50,
+                    zoom: 0.8
+                });
+                break;
             case 'mist':
             case 'smoke':
             case 'haze':
-            case 'dust':
             case 'fog':
             case 'sand':
             case 'ash':
             case 'squall':
-            case 'tornado': body.classList.add('bg-mist'); break;
-            default: body.classList.add('bg-clear-day');
+            case 'tornado':
+                // (NEW) Fog effect
+                vantaEffect = VANTA.FOG({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    highlightColor: 0xc0c0c0,
+                    midtoneColor: 0x8d8d8d,
+                    lowlightColor: 0x9b9b9b,
+                    baseColor: 0xffffff,
+                    blurFactor: 0.60,
+                    speed: 1.50,
+                    zoom: 0.6
+                });
+                break;
+            default:
+                // Default fallback (Globe)
+                vantaEffect = VANTA.GLOBE({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00,
+                    backgroundColor: 0x050f23
+                });
         }
     }
 }
 
-// --- 7. Autocomplete Functions (MODIFIED) ---
+// --- 8. Autocomplete Functions ---
 function handleSearchInput() {
     clearTimeout(autocompleteRequestTimeout);
     const query = searchInput.value;
-
     if (query.length < 3) {
         clearAutocomplete();
         return;
     }
-
-    // (MODIFIED) URL ab /api/autocomplete ko call kar raha hai
     autocompleteRequestTimeout = setTimeout(() => {
         fetch(`/api/autocomplete?text=${query}`)
             .then(response => response.json())
@@ -249,7 +348,6 @@ function handleSearchInput() {
 function displayAutocomplete(features) {
     clearAutocomplete();
     if (!features || features.length === 0) return;
-
     features.forEach(feature => {
         const name = feature.properties.formatted;
         const item = document.createElement("a");
@@ -270,33 +368,50 @@ function clearAutocomplete() {
 }
 
 
-// --- 8. Particle Animation Functions ---
-function createParticles(count) {
-    for (let i = 0; i < count; i++) {
-        const particle = document.createElement("div");
-        particle.className = "particle";
-        particle.style.left = `${Math.random() * 100}vw`;
-        const size = `${Math.random() * 5 + 3}px`;
-        particle.style.width = size;
-        particle.style.height = size;
-        particle.style.animationDelay = `${Math.random() * 15}s`;
-        particleContainer.appendChild(particle);
+// --- 9. (NEW) Share Function ---
+async function shareWeather() {
+    // Spinner dikhao
+    loadingSpinner.classList.remove("d-none");
+    errorMessage.classList.add("d-none");
+
+    try {
+        // html2canvas se screenshot lo
+        const canvas = await html2canvas(weatherCard, {
+            useCORS: true, // Weather icon ke liye zaroori
+            backgroundColor: null // Transparent background rakho
+        });
+        
+        // Canvas ko image file (Blob) mein convert karo
+        const dataUrl = canvas.toDataURL('image/png');
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'weather-report.png', { type: 'image/png' });
+
+        // Web Share API check karo
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+            // Native share menu kho lo
+            await navigator.share({
+                title: 'Weather Report',
+                text: `Here is the weather for ${currentDisplayedCity}:`,
+                files: [file],
+            });
+            hideLoading();
+        } else {
+            // Fallback (Desktop ke liye): Image download kar do
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'weather-report.png';
+            link.click();
+            hideLoading();
+        }
+    } catch (error) {
+        console.error('Share error:', error);
+        showError('Could not share image. Please try again.');
     }
 }
 
-function updateLiftAnimation(temp) {
-    let duration = "20s"; 
-    if (temp > 15) { duration = "15s"; }
-    if (temp > 25) { duration = "10s"; }
-    if (temp > 35) { duration = "5s"; }
-    const particles = document.querySelectorAll(".particle");
-    particles.forEach(p => {
-        p.style.animationDuration = duration;
-    });
-}
 
-
-// --- 9. LocalStorage (Favourites) Functions ---
+// --- 10. LocalStorage (Favourites) Functions ---
 function toggleFavourite() {
     if (!currentDisplayedCity) return;
     const cityIndex = favouriteCities.indexOf(currentDisplayedCity);
@@ -349,7 +464,7 @@ function displayFavourites() {
     });
 }
 
-// --- 10. Helper Functions (UI State) ---
+// --- 11. Helper Functions (UI State) ---
 function showLoading() {
     loadingSpinner.classList.remove("d-none");
     errorMessage.classList.add("d-none");

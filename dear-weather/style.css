@@ -40,10 +40,13 @@
 body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
-    overflow: hidden; /* Scrollbar hatane ke liye */
-    color: #fff; /* Default text color to white for Vanta */
+    overflow: hidden; /* FINAL SCROLLBAR HIDE: Ensures no scrolling on the entire page */
+    color: #fff; /* Default text color to white */
     
-    /* FINAL SCROLLBAR HIDE FIXES */
+    /* Vanta.js Disabled FIX: Solid Dark Background */
+    background-color: #1a237e; /* Deep Blue for a nice, non-laggy look */
+    
+    /* Final Scrollbar hide across all browsers */
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
@@ -52,14 +55,9 @@ body::-webkit-scrollbar {
     display: none;
 }
 
-/* --- Vanta.js Background Container --- */
+/* Vanta.js is commented out, so #vanta-bg is just a placeholder now */
 #vanta-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0; /* Behind content */
+    display: none; 
 }
 
 
@@ -69,7 +67,7 @@ h1, h3 {
     letter-spacing: 0.5px;
 }
 .container {
-    z-index: 2; /* Ensure content is above Vanta */
+    z-index: 2; /* Ensure content is above background */
     position: relative;
 }
 /* White text for toggle switch */
@@ -107,6 +105,7 @@ h1, h3 {
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
     color: #000; /* Reset text color inside card */
+    min-height: 100%; /* Important for side-by-side alignment */
 }
 
 /* --- Share/Save Buttons Container --- */
@@ -203,6 +202,7 @@ h1, h3 {
 }
 
 /* --- Hourly Forecast Container (NEW) --- */
+/* Added a glass-card class to the hourly container for styling */
 #hourly-forecast-container {
     overflow-x: auto; /* Horizontal scroll only */
     padding-bottom: 10px;
@@ -251,6 +251,7 @@ h1, h3 {
     text-align: center;
     transition: all 0.3s ease;
     color: #000; /* Reset color */
+    min-height: 100%; /* Important for equal height in the row */
 }
 .forecast-card-item:hover {
     transform: scale(1.05);

@@ -45,8 +45,8 @@ const forecastRow = document.getElementById("forecast-row");
 // --- 4. Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
     loadFavourites();
-    // Default Vanta background (Using NET for better contrast against white card)
-    updateDynamicBackground("Clear", "01d"); 
+    // Vanta.js is now disabled
+    // updateDynamicBackground("Clear", "01d"); 
 });
 searchButton.addEventListener("click", () => {
     const city = searchInput.value;
@@ -161,8 +161,8 @@ function updateWeatherUI(data) {
     weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
     weatherIcon.alt = data.weather[0].description;
     
-    // Update Vanta Background
-    updateDynamicBackground(data.weather[0].main, iconCode);
+    // Vanta.js is now disabled
+    // updateDynamicBackground(data.weather[0].main, iconCode);
 
     // Show Card
     weatherCard.classList.remove("d-none");
@@ -241,92 +241,13 @@ function updateForecastUI(data) {
     forecastRow.classList.add("animate-in");
 }
 
-// --- 7. Vanta.js Dynamic Background Function (BETTER VISUAL APPEAL & PERFORMANCE) ---
+// --- 7. Vanta.js Dynamic Background Function (DISABLED) ---
 function updateDynamicBackground(condition, iconCode) {
+    // Vanta.js code is commented out here as requested
     if (vantaEffect) {
         vantaEffect.destroy();
     }
-
-    const isNight = iconCode.endsWith('n');
-
-    if (isNight) {
-        // Night: Use NET for high contrast against the light card
-        vantaEffect = VANTA.NET({
-            el: "#vanta-bg",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            color: 0x88aaff, // Halka blue stars/points
-            backgroundColor: 0x030f2a, // Dark blue space
-            points: 10.00,
-            maxDistance: 20.00,
-            spacing: 15.00
-        });
-    } else {
-        // Day
-        switch (condition.toLowerCase()) {
-            case 'rain':
-            case 'drizzle':
-            case 'thunderstorm':
-                // Waves for stormy look
-                vantaEffect = VANTA.WAVES({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    color: 0x3a4b5b, // Dark stormy color
-                    shininess: 25.00,
-                    waveHeight: 10.00,
-                    waveSpeed: 0.50,
-                    zoom: 0.8
-                });
-                break;
-            case 'mist':
-            case 'smoke':
-            case 'haze':
-            case 'fog':
-            case 'sand':
-            case 'ash':
-            case 'squall':
-            case 'tornado':
-                // Fog effect 
-                vantaEffect = VANTA.FOG({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    highlightColor: 0xc0c0c0,
-                    midtoneColor: 0x8d8d8d,
-                    lowlightColor: 0x9b9b9b,
-                    baseColor: 0xffffff,
-                    blurFactor: 0.60,
-                    speed: 1.50,
-                    zoom: 0.6
-                });
-                break;
-            default:
-                // Clear/Clouds: Use Clouds or Net. NET (The blue glowy one) is often better contrast.
-                vantaEffect = VANTA.NET({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    color: 0x3f9eff, 
-                    backgroundColor: 0x050f23,
-                    points: 10.00,
-                    maxDistance: 20.00,
-                    spacing: 15.00
-                });
-        }
-    }
+    // Set a dark background colour via style.css instead
 }
 
 // --- 8. Autocomplete Functions ---
@@ -462,7 +383,6 @@ function displayFavourites() {
 
 // --- 11. Helper Functions (UI State) ---
 function showLoading() {
-    // FIX: Added checks to ensure no null property access (fixes previous errors)
     if (loadingSpinner) loadingSpinner.classList.remove("d-none");
     if (errorMessage) errorMessage.classList.add("d-none");
     if (weatherCard) weatherCard.classList.add("d-none");

@@ -45,7 +45,7 @@ const forecastRow = document.getElementById("forecast-row");
 // --- 4. Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
     loadFavourites();
-    // Default Vanta background (Using NET for better performance)
+    // Default Vanta background (Using CLOUDS for best performance)
     updateDynamicBackground("Clear", "01d"); 
 });
 searchButton.addEventListener("click", () => {
@@ -114,7 +114,7 @@ function fetchWeather(city = null, lat = null, lon = null) {
             hideLoading();
             updateWeatherUI(weatherData);
             updateForecastUI(forecastData);
-            updateHourlyUI(forecastData); // (NEW) Hourly UI update
+            updateHourlyUI(forecastData); 
             currentDisplayedCity = weatherData.name;
             updateSaveButtonState(weatherData.name);
         })
@@ -132,7 +132,7 @@ function updateWeatherUI(data) {
     // Wind Speed Animation
     const windSpeedKmh = currentUnit === 'metric' ? (data.wind.speed * 3.6) : (data.wind.speed * 1.60934 * 3.6);
     const windAnimDuration = Math.max(0.5, 3.5 - (windSpeedKmh / 15));
-    windIcon.style.animationDuration = `${windAnimDuration}s`;
+    if (windIcon) windIcon.style.animationDuration = `${windAnimDuration}s`; // Fixed: Check if element exists
     
     // Units
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
@@ -169,7 +169,7 @@ function updateWeatherUI(data) {
     weatherCard.classList.add("animate-in");
 }
 
-// (NEW) Hourly Forecast UI Update
+// Hourly Forecast UI Update
 function updateHourlyUI(data) {
     hourlyForecastRow.innerHTML = "";
     // Agle 8 intervals (24 hours)
@@ -241,7 +241,7 @@ function updateForecastUI(data) {
     forecastRow.classList.add("animate-in");
 }
 
-// --- 7. Vanta.js Dynamic Background Function (OPTIMIZED) ---
+// --- 7. Vanta.js Dynamic Background Function (BEST PERFORMANCE: CLOUDS) ---
 function updateDynamicBackground(condition, iconCode) {
     if (vantaEffect) {
         vantaEffect.destroy();
@@ -249,95 +249,52 @@ function updateDynamicBackground(condition, iconCode) {
 
     const isNight = iconCode.endsWith('n');
 
-    if (isNight) {
-        // Night: Waves/NET (Less demanding than GLOBE)
-        vantaEffect = VANTA.WAVES({
-            el: "#vanta-bg",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            color: 0x3a4b5b, // Dark stormy color
-            waveSpeed: 0.50,
-            zoom: 0.8
-        });
-    } else {
-        // Day
-        switch (condition.toLowerCase()) {
-            case 'clear':
-            case 'clouds':
-                // Using NET (Lighter than GLOBE)
-                vantaEffect = VANTA.NET({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    color: 0x3f9eff, // Light blue
-                    backgroundColor: 0x050f23, // Dark space blue
-                    points: 10.00,
-                    maxDistance: 20.00,
-                    spacing: 15.00
-                });
-                break;
-            case 'rain':
-            case 'drizzle':
-            case 'thunderstorm':
-                // Waves effect for rainy weather
-                vantaEffect = VANTA.WAVES({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    color: 0x3a4b5b, 
-                    shininess: 25.00,
-                    waveHeight: 10.00,
-                    waveSpeed: 0.50,
-                    zoom: 0.8
-                });
-                break;
-            case 'mist':
-            case 'smoke':
-            case 'haze':
-            case 'fog':
-            case 'sand':
-            case 'ash':
-            case 'squall':
-            case 'tornado':
-                // Fog effect
-                vantaEffect = VANTA.FOG({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    highlightColor: 0xc0c0c0,
-                    midtoneColor: 0x8d8d8d,
-                    lowlightColor: 0x9b9b9b,
-                    baseColor: 0xffffff,
-                    blurFactor: 0.60,
-                    speed: 1.50,
-                    zoom: 0.6
-                });
-                break;
-            default:
-                // Default fallback (NET)
-                vantaEffect = VANTA.NET({
-                    el: "#vanta-bg",
-                    mouseControls: true,
-                    touchControls: true,
-                    gyroControls: false,
-                    minHeight: 200.00,
-                    minWidth: 200.00,
-                    color: 0x3f9eff, 
-                    backgroundColor: 0x050f23
-                });
-        }
+    // CLOUDS is generally the lightest and most stable effect.
+    // We will use CLOUDS for most conditions and FOG for misty days.
+    
+    switch (condition.toLowerCase()) {
+        case 'mist':
+        case 'smoke':
+        case 'haze':
+        case 'fog':
+        case 'sand':
+        case 'ash':
+        case 'squall':
+        case 'tornado':
+            // Fog effect (A bit heavier, but fits the condition)
+            vantaEffect = VANTA.FOG({
+                el: "#vanta-bg",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                highlightColor: 0xc0c0c0,
+                midtoneColor: 0x8d8d8d,
+                lowlightColor: 0x9b9b9b,
+                baseColor: 0xffffff,
+                blurFactor: 0.60,
+                speed: 1.50,
+                zoom: 0.6
+            });
+            break;
+        default:
+            // Default and most common conditions (Clear, Clouds, Rain, Thunderstorm, Night): Use CLOUDS for maximum performance.
+            vantaEffect = VANTA.CLOUDS({
+                el: "#vanta-bg",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                // Adjust colors for day/night feeling
+                skyColor: isNight ? 0x050f2a : 0x90b0d8,
+                cloudColor: isNight ? 0x223344 : 0xc0d0e8,
+                sunColor: isNight ? 0x000000 : 0xffa040,
+                speed: 1.0,
+                // Rain and Thunder will use the darker sky colors automatically
+            });
+            break;
     }
 }
 
@@ -384,8 +341,8 @@ function clearAutocomplete() {
 
 // --- 9. Share Function ---
 async function shareWeather() {
-    loadingSpinner.classList.remove("d-none");
-    errorMessage.classList.add("d-none");
+    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
+    if (errorMessage) errorMessage.classList.add("d-none");
 
     try {
         const canvas = await html2canvas(weatherCard, {
@@ -474,39 +431,42 @@ function displayFavourites() {
 
 // --- 11. Helper Functions (UI State) ---
 function showLoading() {
-    loadingSpinner.classList.remove("d-none");
-    errorMessage.classList.add("d-none");
-    weatherCard.classList.add("d-none");
-    forecastTitle.classList.add("d-none");
-    forecastRow.classList.add("d-none");
-    hourlyTitle.classList.add("d-none"); // (NEW)
-    hourlyForecastContainer.classList.add("d-none"); // (NEW)
-    weatherCard.classList.remove("animate-in");
-    forecastTitle.classList.remove("animate-in");
-    forecastRow.classList.remove("animate-in");
-    hourlyTitle.classList.remove("animate-in"); // (NEW)
-    hourlyForecastContainer.classList.remove("animate-in"); // (NEW)
+    // FIX: Added checks (e.g., loadingSpinner) to prevent error if elements are null 
+    // during initial calls (which can happen before DOM fully loads or if selectors fail).
+    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
+    if (errorMessage) errorMessage.classList.add("d-none");
+    if (weatherCard) weatherCard.classList.add("d-none");
+    if (forecastTitle) forecastTitle.classList.add("d-none");
+    if (forecastRow) forecastRow.classList.add("d-none");
+    if (hourlyTitle) hourlyTitle.classList.add("d-none"); 
+    if (hourlyForecastContainer) hourlyForecastContainer.classList.add("d-none"); 
+    if (weatherCard) weatherCard.classList.remove("animate-in");
+    if (forecastTitle) forecastTitle.classList.remove("animate-in");
+    if (forecastRow) forecastRow.classList.remove("animate-in");
+    if (hourlyTitle) hourlyTitle.classList.remove("animate-in"); 
+    if (hourlyForecastContainer) hourlyForecastContainer.classList.remove("animate-in"); 
 }
 function hideLoading() {
-    loadingSpinner.classList.add("d-none");
+    if (loadingSpinner) loadingSpinner.classList.add("d-none");
 }
 function showError(message) {
     hideLoading();
-    weatherCard.classList.add("d-none");
-    forecastTitle.classList.add("d-none");
-    forecastRow.classList.add("d-none");
-    hourlyTitle.classList.add("d-none"); // (NEW)
-    hourlyForecastContainer.classList.add("d-none"); // (NEW)
-    weatherCard.classList.remove("animate-in");
-    forecastTitle.classList.remove("animate-in");
-    forecastRow.classList.remove("animate-in");
-    hourlyTitle.classList.remove("animate-in"); // (NEW)
-    hourlyForecastContainer.classList.remove("animate-in"); // (NEW)
-    errorMessage.textContent = message;
-    errorMessage.classList.remove("d-none");
+    if (weatherCard) weatherCard.classList.add("d-none");
+    if (forecastTitle) forecastTitle.classList.add("d-none");
+    if (forecastRow) forecastRow.classList.add("d-none");
+    if (hourlyTitle) hourlyTitle.classList.add("d-none"); 
+    if (hourlyForecastContainer) hourlyForecastContainer.classList.add("d-none"); 
+    if (weatherCard) weatherCard.classList.remove("animate-in");
+    if (forecastTitle) forecastTitle.classList.remove("animate-in");
+    if (forecastRow) forecastRow.classList.remove("animate-in");
+    if (hourlyTitle) hourlyTitle.classList.remove("animate-in"); 
+    if (hourlyForecastContainer) hourlyForecastContainer.classList.remove("animate-in"); 
+    if (errorMessage) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove("d-none");
+    }
 }
 function formatTime(timestamp, timezone) {
-    // Timezone offset ko seconds se milliseconds mein convert karke local time calculate karo
     const date = new Date((timestamp + timezone) * 1000); 
     let hours = date.getUTCHours();
     const minutes = date.getUTCMinutes();

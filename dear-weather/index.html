@@ -14,7 +14,7 @@
 
     <div id="vanta-bg"></div>
 
-    <div class="container my-5" style="position: relative; z-index: 2;">
+    <div class="container my-5" style="position: relative; z-index: 2; max-height: 100vh; overflow-y: auto;">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
 
@@ -89,6 +89,11 @@
                     </div>
                 </div>
                 
+                <h3 class="text-center text-white my-4 d-none" id="hourly-title">Hourly Forecast</h3>
+                <div class="d-none" id="hourly-forecast-container">
+                    <div class="d-flex gap-2" id="hourly-forecast-row">
+                    </div>
+                </div>
                 <h3 class="text-center text-white my-4 d-none" id="forecast-title">5-Day Forecast</h3>
                 
                 <div class="row d-none" id="forecast-row">

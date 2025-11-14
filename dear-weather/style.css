@@ -40,11 +40,11 @@
 body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
-    overflow-x: hidden; /* Hide horizontal scroll */
-    color: #fff; /* (NEW) Default text color to white for Vanta */
+    overflow: hidden; /* Scrollbar hatane ke liye */
+    color: #fff; /* Default text color to white for Vanta */
 }
 
-/* --- (NEW) Vanta.js Background Container --- */
+/* --- Vanta.js Background Container --- */
 #vanta-bg {
     position: fixed;
     top: 0;
@@ -64,7 +64,7 @@ h1, h3 {
     z-index: 2; /* Ensure content is above Vanta */
     position: relative;
 }
-/* (NEW) White text for toggle switch */
+/* White text for toggle switch */
 .form-check-label {
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
@@ -83,7 +83,7 @@ h1, h3 {
 }
 #autocomplete-container .list-group-item {
     cursor: pointer;
-    color: #333; /* (NEW) Ensure text is readable */
+    color: #333; /* Ensure text is readable */
 }
 #autocomplete-container .list-group-item:hover {
     background-color: #f0f0f0;
@@ -98,10 +98,10 @@ h1, h3 {
     backdrop-filter: blur(15px);
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
-    color: #000; /* (NEW) Reset text color inside card */
+    color: #000; /* Reset text color inside card */
 }
 
-/* --- (NEW) Share/Save Buttons Container --- */
+/* --- Share/Save Buttons Container --- */
 .card-buttons {
     position: absolute;
     top: 15px;
@@ -161,7 +161,7 @@ h1, h3 {
     filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
 }
 
-/* (NEW) A-to-Z details with icons */
+/* A-to-Z details with icons */
 .details-col p {
     font-size: 0.9rem;
     color: #222;
@@ -180,7 +180,7 @@ h1, h3 {
     color: #000;
     margin-right: 5px;
 }
-/* (NEW) Icon Animation Classes */
+/* Icon Animation Classes */
 #wind-icon {
     animation: wind-blow 3s linear infinite;
     color: #555;
@@ -192,6 +192,44 @@ h1, h3 {
 .sunset-anim {
     color: #ff8000 !important;
     animation: sunset-glow 2s infinite alternate ease-in-out;
+}
+
+/* --- Hourly Forecast Container (NEW) --- */
+#hourly-forecast-container {
+    overflow-x: auto; /* Horizontal scroll only */
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+/* Webkit (Chrome, Safari) scrollbar hide */
+#hourly-forecast-container::-webkit-scrollbar {
+    display: none;
+}
+.hourly-card-item {
+    min-width: 80px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border-radius: 1rem;
+    padding: 10px 5px;
+    text-align: center;
+    transition: all 0.3s ease;
+    color: #000;
+}
+.hourly-card-item:hover {
+    transform: scale(1.05);
+    background-color: rgba(255, 255, 255, 0.6);
+}
+.hourly-card-item h6 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.hourly-card-item p {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0;
 }
 
 
@@ -247,10 +285,3 @@ h1, h3 {
     color: #000;
     transform: scale(1.05);
 }
-
-/* --- Custom Scrollbar --- */
-html { scrollbar-width: thin; scrollbar-color: #007bff #f1f1f1; }
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-::-webkit-scrollbar-thumb { background: #007bff; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #0056b3; }

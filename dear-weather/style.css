@@ -42,6 +42,14 @@ body {
     min-height: 100vh;
     overflow: hidden; /* Scrollbar hatane ke liye */
     color: #fff; /* Default text color to white for Vanta */
+    
+    /* FINAL SCROLLBAR HIDE FIXES */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+/* Webkit (Chrome, Safari) scrollbar hide */
+body::-webkit-scrollbar {
+    display: none;
 }
 
 /* --- Vanta.js Background Container --- */

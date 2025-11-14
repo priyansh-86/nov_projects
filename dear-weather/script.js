@@ -45,7 +45,7 @@ const forecastRow = document.getElementById("forecast-row");
 // --- 4. Event Listeners ---
 document.addEventListener("DOMContentLoaded", () => {
     loadFavourites();
-    // Default Vanta background (Using CLOUDS for best performance)
+    // Default Vanta background (Using NET for better contrast against white card)
     updateDynamicBackground("Clear", "01d"); 
 });
 searchButton.addEventListener("click", () => {
@@ -132,7 +132,7 @@ function updateWeatherUI(data) {
     // Wind Speed Animation
     const windSpeedKmh = currentUnit === 'metric' ? (data.wind.speed * 3.6) : (data.wind.speed * 1.60934 * 3.6);
     const windAnimDuration = Math.max(0.5, 3.5 - (windSpeedKmh / 15));
-    if (windIcon) windIcon.style.animationDuration = `${windAnimDuration}s`; // Fixed: Check if element exists
+    if (windIcon) windIcon.style.animationDuration = `${windAnimDuration}s`; 
     
     // Units
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
@@ -241,7 +241,7 @@ function updateForecastUI(data) {
     forecastRow.classList.add("animate-in");
 }
 
-// --- 7. Vanta.js Dynamic Background Function (BEST PERFORMANCE: CLOUDS) ---
+// --- 7. Vanta.js Dynamic Background Function (BETTER VISUAL APPEAL & PERFORMANCE) ---
 function updateDynamicBackground(condition, iconCode) {
     if (vantaEffect) {
         vantaEffect.destroy();
@@ -249,52 +249,83 @@ function updateDynamicBackground(condition, iconCode) {
 
     const isNight = iconCode.endsWith('n');
 
-    // CLOUDS is generally the lightest and most stable effect.
-    // We will use CLOUDS for most conditions and FOG for misty days.
-    
-    switch (condition.toLowerCase()) {
-        case 'mist':
-        case 'smoke':
-        case 'haze':
-        case 'fog':
-        case 'sand':
-        case 'ash':
-        case 'squall':
-        case 'tornado':
-            // Fog effect (A bit heavier, but fits the condition)
-            vantaEffect = VANTA.FOG({
-                el: "#vanta-bg",
-                mouseControls: true,
-                touchControls: true,
-                gyroControls: false,
-                minHeight: 200.00,
-                minWidth: 200.00,
-                highlightColor: 0xc0c0c0,
-                midtoneColor: 0x8d8d8d,
-                lowlightColor: 0x9b9b9b,
-                baseColor: 0xffffff,
-                blurFactor: 0.60,
-                speed: 1.50,
-                zoom: 0.6
-            });
-            break;
-        default:
-            // Default and most common conditions (Clear, Clouds, Rain, Thunderstorm, Night): Use CLOUDS for maximum performance.
-            vantaEffect = VANTA.CLOUDS({
-                el: "#vanta-bg",
-                mouseControls: true,
-                touchControls: true,
-                gyroControls: false,
-                minHeight: 200.00,
-                minWidth: 200.00,
-                // Adjust colors for day/night feeling
-                skyColor: isNight ? 0x050f2a : 0x90b0d8,
-                cloudColor: isNight ? 0x223344 : 0xc0d0e8,
-                sunColor: isNight ? 0x000000 : 0xffa040,
-                speed: 1.0,
-                // Rain and Thunder will use the darker sky colors automatically
-            });
-            break;
+    if (isNight) {
+        // Night: Use NET for high contrast against the light card
+        vantaEffect = VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            color: 0x88aaff, // Halka blue stars/points
+            backgroundColor: 0x030f2a, // Dark blue space
+            points: 10.00,
+            maxDistance: 20.00,
+            spacing: 15.00
+        });
+    } else {
+        // Day
+        switch (condition.toLowerCase()) {
+            case 'rain':
+            case 'drizzle':
+            case 'thunderstorm':
+                // Waves for stormy look
+                vantaEffect = VANTA.WAVES({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    color: 0x3a4b5b, // Dark stormy color
+                    shininess: 25.00,
+                    waveHeight: 10.00,
+                    waveSpeed: 0.50,
+                    zoom: 0.8
+                });
+                break;
+            case 'mist':
+            case 'smoke':
+            case 'haze':
+            case 'fog':
+            case 'sand':
+            case 'ash':
+            case 'squall':
+            case 'tornado':
+                // Fog effect 
+                vantaEffect = VANTA.FOG({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    highlightColor: 0xc0c0c0,
+                    midtoneColor: 0x8d8d8d,
+                    lowlightColor: 0x9b9b9b,
+                    baseColor: 0xffffff,
+                    blurFactor: 0.60,
+                    speed: 1.50,
+                    zoom: 0.6
+                });
+                break;
+            default:
+                // Clear/Clouds: Use Clouds or Net. NET (The blue glowy one) is often better contrast.
+                vantaEffect = VANTA.NET({
+                    el: "#vanta-bg",
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    color: 0x3f9eff, 
+                    backgroundColor: 0x050f23,
+                    points: 10.00,
+                    maxDistance: 20.00,
+                    spacing: 15.00
+                });
+        }
     }
 }
 
@@ -431,8 +462,7 @@ function displayFavourites() {
 
 // --- 11. Helper Functions (UI State) ---
 function showLoading() {
-    // FIX: Added checks (e.g., loadingSpinner) to prevent error if elements are null 
-    // during initial calls (which can happen before DOM fully loads or if selectors fail).
+    // FIX: Added checks to ensure no null property access (fixes previous errors)
     if (loadingSpinner) loadingSpinner.classList.remove("d-none");
     if (errorMessage) errorMessage.classList.add("d-none");
     if (weatherCard) weatherCard.classList.add("d-none");

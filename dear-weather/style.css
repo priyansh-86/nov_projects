@@ -40,19 +40,13 @@
 body {
     font-family: 'Poppins', sans-serif;
     min-height: 100vh;
-    overflow: hidden; /* FINAL SCROLLBAR HIDE: Ensures no scrolling on the entire page */
+    /* FIX: Removed overflow: hidden so the page can scroll */
     color: #fff; /* Default text color to white */
     
     /* Vanta.js Disabled FIX: Solid Dark Background */
-    background-color: #1a237e; /* Deep Blue for a nice, non-laggy look */
+    background-color: #1a237e; /* Deep Blue */
     
-    /* Final Scrollbar hide across all browsers */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
-/* Webkit (Chrome, Safari) scrollbar hide */
-body::-webkit-scrollbar {
-    display: none;
+    /* FIX: Removed body scrollbar hide CSS */
 }
 
 /* Vanta.js is commented out, so #vanta-bg is just a placeholder now */

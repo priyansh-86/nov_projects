@@ -39,25 +39,41 @@ interface MovieData {
   recommendations: { results: RecommendedMovie[] };
 }
 
-// --- Custom Hook for LocalStorage ---
+// --- FIXED Custom Hook for LocalStorage (Hydration Safe) ---
 const useLocalStorage = (key: string, defaultValue: string[]) => {
-  const [value, setValue] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return defaultValue;
-    
+  // Start with default value (same on server and client)
+  const [value, setValue] = useState<string[]>(defaultValue);
+  const [isClient, setIsClient] = useState(false);
+
+  // Mark when we're on client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load from localStorage only after component mounts (client-side only)
+  useEffect(() => {
+    if (!isClient) return;
+
     try {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : defaultValue;
+      if (item) {
+        setValue(JSON.parse(item));
+      }
     } catch (error) {
       console.error('Error loading from localStorage:', error);
-      return defaultValue;
     }
-  });
+  }, [key, isClient]);
 
+  // Save to localStorage whenever value changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!isClient) return;
+
+    try {
       localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
     }
-  }, [key, value]);
+  }, [key, value, isClient]);
 
   return [value, setValue] as const;
 };
@@ -94,7 +110,7 @@ const useDragScroll = () => {
       if (!isDragging) return;
       e.preventDefault();
       const x = e.pageX - element.offsetLeft;
-      const walk = (x - startX) * 2; // Scroll speed
+      const walk = (x - startX) * 2;
       element.scrollLeft = scrollLeft - walk;
     };
 
@@ -120,22 +136,15 @@ const useDragScroll = () => {
 const MovieSkeleton: React.FC = () => (
   <div className="bg-secondary-dark rounded-xl p-8 shadow-2xl animate-pulse">
     <div className="flex flex-col md:flex-row gap-8">
-      {/* Poster Skeleton */}
       <div className="w-full md:w-1/3 h-96 bg-gray-700 rounded-lg"></div>
-
-      {/* Details Skeleton */}
       <div className="flex-1 space-y-4">
         <div className="h-10 bg-gray-700 rounded w-3/4"></div>
         <div className="h-6 bg-gray-700 rounded w-1/2"></div>
-        
-        {/* Badges */}
         <div className="flex gap-3">
           <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
           <div className="h-8 w-32 bg-gray-700 rounded-full"></div>
           <div className="h-8 w-24 bg-gray-700 rounded-full"></div>
         </div>
-
-        {/* Genres */}
         <div className="space-y-2">
           <div className="h-6 bg-gray-700 rounded w-24"></div>
           <div className="flex gap-2">
@@ -144,8 +153,6 @@ const MovieSkeleton: React.FC = () => (
             <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
           </div>
         </div>
-
-        {/* Overview */}
         <div className="space-y-2">
           <div className="h-6 bg-gray-700 rounded w-32"></div>
           <div className="h-4 bg-gray-700 rounded w-full"></div>
@@ -154,8 +161,6 @@ const MovieSkeleton: React.FC = () => (
         </div>
       </div>
     </div>
-
-    {/* Cast Skeleton */}
     <div className="mt-8">
       <div className="h-8 bg-gray-700 rounded w-32 mb-4"></div>
       <div className="flex gap-4 overflow-x-hidden">
@@ -175,7 +180,7 @@ const MovieSkeleton: React.FC = () => (
 const CastMemberCard: React.FC<{ member: CastMember }> = ({ member }) => {
   const imageUrl = member.profile_path
     ? `https://image.tmdb.org/t/p/w200${member.profile_path}`
-    : 'https://via.placeholder.com/200?text=No+Image';
+    : 'https://placehold.co/200x300/1e293b/f8fafc?text=No+Image';
 
   return (
     <div className="flex-shrink-0 w-32 text-center">
@@ -216,7 +221,7 @@ const RecommendedMovieCard: React.FC<{
 }> = ({ movie, onMovieClick }) => {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
-    : 'https://via.placeholder.com/200x300?text=No+Poster';
+    : 'https://placehold.co/200x300/1e293b/f8fafc?text=No+Poster';
 
   return (
     <div 
@@ -251,7 +256,7 @@ const MovieDetails: React.FC<{
 }> = ({ movie, onRecommendedClick }) => {
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : 'https://via.placeholder.com/500?text=No+Poster';
+    : 'https://placehold.co/500x750/1e293b/f8fafc?text=No+Poster';
 
   const topCast = useMemo(() => movie.credits.cast.slice(0, 6), [movie.credits.cast]);
   const recommendations = useMemo(
@@ -259,14 +264,12 @@ const MovieDetails: React.FC<{
     [movie.recommendations]
   );
 
-  // Drag scroll hooks for horizontal sections
   const castScrollRef = useDragScroll();
   const recommendScrollRef = useDragScroll();
 
   return (
     <div className="bg-secondary-dark rounded-xl p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Poster */}
         <img
           src={posterUrl}
           alt={movie.title}
@@ -275,15 +278,11 @@ const MovieDetails: React.FC<{
           onDragStart={(e) => e.preventDefault()}
           className="w-full md:w-1/3 rounded-lg poster-shadow"
         />
-
-        {/* Details */}
         <div className="flex-1">
           <h2 className="text-4xl font-bold text-accent mb-2">{movie.title}</h2>
           <p className="text-lg italic text-gray-400 mb-4">
             {movie.tagline || 'A great cinematic experience.'}
           </p>
-
-          {/* Key Info Badges */}
           <div className="flex flex-wrap gap-3 mb-4">
             <span className="bg-accent text-white px-3 py-1 rounded-full text-sm font-semibold">
               ⭐ {movie.vote_average.toFixed(1)}
@@ -295,8 +294,6 @@ const MovieDetails: React.FC<{
               ⏱️ {movie.runtime} min
             </span>
           </div>
-
-          {/* Genres */}
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">Genres</h3>
             <div className="flex flex-wrap gap-2">
@@ -310,8 +307,6 @@ const MovieDetails: React.FC<{
               ))}
             </div>
           </div>
-
-          {/* Overview */}
           <div>
             <h3 className="text-xl font-semibold mb-2">Overview</h3>
             <p className="text-gray-300 leading-relaxed">{movie.overview}</p>
@@ -319,7 +314,6 @@ const MovieDetails: React.FC<{
         </div>
       </div>
 
-      {/* Cast Section with Drag Scroll */}
       {topCast.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Top Cast</h3>
@@ -334,7 +328,6 @@ const MovieDetails: React.FC<{
         </div>
       )}
 
-      {/* FEATURE 2: Recommendations Section with Drag Scroll */}
       {recommendations.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Similar Movies You Might Like</h3>
@@ -353,7 +346,6 @@ const MovieDetails: React.FC<{
         </div>
       )}
 
-      {/* Reviews Section */}
       {movie.reviews.results.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">User Reviews</h3>
@@ -374,8 +366,6 @@ export default function Home() {
   const [movieData, setMovieData] = useState<MovieData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // FEATURE 3: Search History with LocalStorage
   const [searchHistory, setSearchHistory] = useLocalStorage('movieSearchHistory', []);
 
   // Disable right-click on entire page
@@ -391,7 +381,6 @@ export default function Home() {
     };
   }, []);
 
-  // Function to add search to history
   const addToHistory = useCallback((searchTerm: string) => {
     setSearchHistory((prev) => {
       const newHistory = [searchTerm, ...prev.filter(item => item !== searchTerm)];
@@ -399,12 +388,10 @@ export default function Home() {
     });
   }, [setSearchHistory]);
 
-  // Function to clear history
   const clearHistory = useCallback(() => {
     setSearchHistory([]);
   }, [setSearchHistory]);
 
-  // useCallback to prevent unnecessary re-creations of the function
   const searchMovie = useCallback(async (searchTerm?: string) => {
     const movieTitle = searchTerm || title;
     
@@ -436,7 +423,6 @@ export default function Home() {
     }
   }, [title, addToHistory]);
 
-  // Handle recommended movie click
   const handleRecommendedClick = useCallback((movieTitle: string) => {
     setTitle(movieTitle);
     searchMovie(movieTitle);
@@ -446,12 +432,10 @@ export default function Home() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <h1 className="text-5xl font-extrabold text-center mb-8 text-accent">
           🎬 Movie Explorer
         </h1>
 
-        {/* Search Bar */}
         <div className="flex gap-4 mb-4">
           <input
             type="text"
@@ -470,7 +454,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* FEATURE 3: Search History */}
         {searchHistory.length > 0 && !loading && !movieData && (
           <div className="bg-secondary-dark rounded-lg p-4 mb-8">
             <div className="flex justify-between items-center mb-3">
@@ -499,17 +482,14 @@ export default function Home() {
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-600 text-white p-4 rounded-lg mb-8">
             Error: {error}
           </div>
         )}
 
-        {/* FEATURE 1: Loading Skeleton */}
         {loading && <MovieSkeleton />}
 
-        {/* Movie Details */}
         {movieData && !loading && (
           <MovieDetails 
             movie={movieData} 
@@ -517,7 +497,6 @@ export default function Home() {
           />
         )}
 
-        {/* Empty State */}
         {!movieData && !loading && !error && (
           <div className="text-center text-gray-400 mt-16">
             <p className="text-2xl">🎬 Your cinematic journey begins here!</p>

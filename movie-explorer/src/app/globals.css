@@ -38,7 +38,44 @@
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* FEATURE: Disable text/image selection globally */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection in input fields only */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* FEATURE: Prevent image dragging and saving */
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Custom class for a cinematic shadow effect on posters */
 .poster-shadow {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* FEATURE: Horizontal drag scrolling container */
+.draggable-scroll {
+  cursor: grab;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.draggable-scroll:active {
+  cursor: grabbing;
 }

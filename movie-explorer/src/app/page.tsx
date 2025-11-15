@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 // Define the shape (interface) of the movie data for TypeScript safety
 interface CastMember {
@@ -60,6 +60,58 @@ const useLocalStorage = (key: string, defaultValue: string[]) => {
   }, [key, value]);
 
   return [value, setValue] as const;
+};
+
+// --- Custom Hook for Drag Scroll ---
+const useDragScroll = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      setIsDragging(true);
+      setStartX(e.pageX - element.offsetLeft);
+      setScrollLeft(element.scrollLeft);
+      element.style.cursor = 'grabbing';
+    };
+
+    const handleMouseLeave = () => {
+      setIsDragging(false);
+      element.style.cursor = 'grab';
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      element.style.cursor = 'grab';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - element.offsetLeft;
+      const walk = (x - startX) * 2; // Scroll speed
+      element.scrollLeft = scrollLeft - walk;
+    };
+
+    element.addEventListener('mousedown', handleMouseDown);
+    element.addEventListener('mouseleave', handleMouseLeave);
+    element.addEventListener('mouseup', handleMouseUp);
+    element.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('mouseleave', handleMouseLeave);
+      element.removeEventListener('mouseup', handleMouseUp);
+      element.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isDragging, startX, scrollLeft]);
+
+  return ref;
 };
 
 // --- Helper Components for Clean UI ---
@@ -130,6 +182,9 @@ const CastMemberCard: React.FC<{ member: CastMember }> = ({ member }) => {
       <img
         src={imageUrl}
         alt={member.name}
+        draggable="false"
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
         className="w-full h-48 object-cover rounded-lg shadow-md"
       />
       <p className="mt-2 text-sm font-semibold">{member.name}</p>
@@ -171,6 +226,9 @@ const RecommendedMovieCard: React.FC<{
       <img
         src={posterUrl}
         alt={movie.title}
+        draggable="false"
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
         className="w-full h-60 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
       />
       <p className="mt-2 text-sm font-semibold line-clamp-2 group-hover:text-accent">
@@ -201,6 +259,10 @@ const MovieDetails: React.FC<{
     [movie.recommendations]
   );
 
+  // Drag scroll hooks for horizontal sections
+  const castScrollRef = useDragScroll();
+  const recommendScrollRef = useDragScroll();
+
   return (
     <div className="bg-secondary-dark rounded-xl p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row gap-8">
@@ -208,6 +270,9 @@ const MovieDetails: React.FC<{
         <img
           src={posterUrl}
           alt={movie.title}
+          draggable="false"
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
           className="w-full md:w-1/3 rounded-lg poster-shadow"
         />
 
@@ -254,11 +319,14 @@ const MovieDetails: React.FC<{
         </div>
       </div>
 
-      {/* Cast Section */}
+      {/* Cast Section with Drag Scroll */}
       {topCast.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Top Cast</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div 
+            ref={castScrollRef}
+            className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
+          >
             {topCast.map((member) => (
               <CastMemberCard key={member.cast_id} member={member} />
             ))}
@@ -266,11 +334,14 @@ const MovieDetails: React.FC<{
         </div>
       )}
 
-      {/* FEATURE 2: Recommendations Section */}
+      {/* FEATURE 2: Recommendations Section with Drag Scroll */}
       {recommendations.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Similar Movies You Might Like</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4">
+          <div 
+            ref={recommendScrollRef}
+            className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
+          >
             {recommendations.map((recMovie) => (
               <RecommendedMovieCard 
                 key={recMovie.id} 
@@ -307,11 +378,24 @@ export default function Home() {
   // FEATURE 3: Search History with LocalStorage
   const [searchHistory, setSearchHistory] = useLocalStorage('movieSearchHistory', []);
 
+  // Disable right-click on entire page
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    
+    document.addEventListener('contextmenu', handleContextMenu);
+    
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
   // Function to add search to history
   const addToHistory = useCallback((searchTerm: string) => {
     setSearchHistory((prev) => {
       const newHistory = [searchTerm, ...prev.filter(item => item !== searchTerm)];
-      return newHistory.slice(0, 5); // Keep only last 5 searches
+      return newHistory.slice(0, 5);
     });
   }, [setSearchHistory]);
 
@@ -343,8 +427,8 @@ export default function Home() {
       }
 
       setMovieData(data);
-      addToHistory(movieTitle); // Add to search history
-      if (!searchTerm) setTitle(''); // Clear input only if manual search
+      addToHistory(movieTitle);
+      if (!searchTerm) setTitle('');
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {

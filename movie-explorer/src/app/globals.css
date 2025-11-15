@@ -1,0 +1,44 @@
+/* src/app/globals.css */
+
+@import "tailwindcss";
+
+/* Tailwind v4 CSS-based theme configuration */
+@theme {
+  /* Custom colors for cinema theme */
+  --color-primary-dark: #0f172a;
+  --color-secondary-dark: #1e293b;
+  --color-accent: #f97316;
+  --color-text-light: #f8fafc;
+  
+  /* Custom shadow */
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Hide scrollbar globally but keep scroll functionality */
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+/* Apply no-scrollbar to all overflow elements globally */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Custom class for a cinematic shadow effect on posters */
+.poster-shadow {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}

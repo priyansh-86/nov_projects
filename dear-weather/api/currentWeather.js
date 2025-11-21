@@ -2,11 +2,10 @@
 // Yeh file /api/currentWeather.js par hai
 
 export default async function handler(request, response) {
-    // Environment variable se API key padho
-    // Naam: OPENWEATHER_API_KEY
-    const API_KEY = process.env.OPENWEATHER_API_KEY;
+    // FIX: Local testing ke liye apni OPENWEATHER API key yahan daalein.
+    // Deployment ke liye isko wapas process.env.OPENWEATHER_API_KEY kar dein.
+    const API_KEY = process.env.OPENWEATHER_API_KEY || "1c76c52d7815c15e10452972e43baeb8"; // <--- CHANGE THIS
     
-    // Frontend se query parameters (city, lat, lon) lo
     const { q, lat, lon, units } = request.query;
     
     let url;
@@ -20,13 +19,11 @@ export default async function handler(request, response) {
         const apiRes = await fetch(url);
         
         if (!apiRes.ok) {
-            // Agar OpenWeatherMap se error aaye, toh woh error frontend ko bhej do
             const errorData = await apiRes.json();
             return response.status(apiRes.status).json({ error: errorData.message || 'City not found' });
         }
         
         const data = await apiRes.json();
-        // Sab theek raha, toh weather data frontend ko bhej do
         response.status(200).json(data);
         
     } catch (error) {

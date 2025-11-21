@@ -2,8 +2,8 @@
 // Yeh file /api/autocomplete.js par hai
 
 export default async function handler(request, response) {
-    // Naam: GEOAPIFY_API_KEY
-    const API_KEY = process.env.GEOAPIFY_API_KEY;
+    // FIX: Local testing ke liye apni GEOAPIFY API key yahan daalein.
+    const API_KEY = process.env.GEOAPIFY_API_KEY || "a21fb32be479450e858ec0b56a15a753"; // <--- CHANGE THIS
     const { text } = request.query;
 
     const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${text}&type=city&apiKey=${API_KEY}`;

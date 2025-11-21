@@ -2,43 +2,67 @@
 
 @import "tailwindcss";
 
-/* Tailwind v4 CSS-based theme configuration */
 @theme {
-  /* Custom colors for cinema theme */
   --color-primary-dark: #0f172a;
   --color-secondary-dark: #1e293b;
   --color-accent: #f97316;
   --color-text-light: #f8fafc;
-  
-  /* Custom shadow */
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 }
 
-/* Hide scrollbar globally but keep scroll functionality */
 @layer utilities {
-  /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   
-  /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
-/* Apply no-scrollbar to all overflow elements globally */
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 *::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
 }
 
-/* Custom class for a cinematic shadow effect on posters */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .poster-shadow {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.draggable-scroll {
+  cursor: grab;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.draggable-scroll:active {
+  cursor: grabbing;
 }

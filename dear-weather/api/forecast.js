@@ -2,8 +2,8 @@
 // Yeh file /api/forecast.js par hai
 
 export default async function handler(request, response) {
-    // Naam: OPENWEATHER_API_KEY
-    const API_KEY = process.env.OPENWEATHER_API_KEY;
+    // FIX: Local testing ke liye apni OPENWEATHER API key yahan daalein.
+    const API_KEY = process.env.OPENWEATHER_API_KEY || "1c76c52d7815c15e10452972e43baeb8"; // <--- CHANGE THIS
     const { q, lat, lon, units } = request.query;
     
     let url;

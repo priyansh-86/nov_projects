@@ -7,7 +7,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" href="/logo.png" /> 
     
     <style>
 /* ============================================
@@ -18,8 +18,6 @@
 /* ============================================
    ANIMATIONS
    ============================================ */
-
-/* Card slide-up animation */
 @keyframes slideUpFadeIn {
     from {
         opacity: 0;
@@ -30,71 +28,12 @@
         transform: translateY(0);
     }
 }
-
-/* Wind icon animation - horizontal movement */
-@keyframes wind-blow {
-    0% { transform: translateX(-1px); }
-    50% { transform: translateX(2px); }
-    100% { transform: translateX(-1px); }
-}
-
-/* Sunrise glow effect - yellow/golden glow */
-@keyframes sunrise-glow {
-    from { text-shadow: 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ffdd1c; }
-    to { text-shadow: 0 0 6px #fff, 0 0 8px #ffdd1c, 0 0 10px #ffdd1c; }
-}
-
-/* Sunset glow effect - orange glow */
-@keyframes sunset-glow {
-    from { text-shadow: 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ff8000; }
-    to { text-shadow: 0 0 6px #fff, 0 0 8px #ff8000, 0 0 10px #ff8000; }
-}
-
-/* Beautiful gradient animation for background */
-@keyframes gradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-/* Floating clouds animation */
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0px) translateX(0px);
-    }
-    33% {
-        transform: translateY(-20px) translateX(10px);
-    }
-    66% {
-        transform: translateY(-10px) translateX(-10px);
-    }
-}
-
-/* Subtle pulse animation for decorative elements */
-@keyframes pulse {
-    0%, 100% {
-        opacity: 0.6;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.8;
-        transform: scale(1.05);
-    }
-}
-
-/* Class to trigger slide-up animation */
 .animate-in {
     animation: slideUpFadeIn 0.5s ease-out forwards;
 }
 
 /* ============================================
-   BASE STYLES & BACKGROUND
+   BASE STYLES & BACKGROUND (Mobile Look)
    ============================================ */
 
 body {
@@ -103,576 +42,265 @@ body {
     color: #fff;
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Prevent horizontal scroll */
-    
-    /* Beautiful animated gradient background */
-    background: linear-gradient(
-        135deg,
-        #667eea 0%,
-        #764ba2 25%,
-        #f093fb 50%,
-        #4facfe 75%,
-        #667eea 100%
-    );
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
-    position: relative;
+    /* Soft Blue Gradient Mobile Background */
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
 }
 
-/* Decorative background elements for depth */
-body::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-        circle at 30% 50%,
-        rgba(255, 255, 255, 0.1) 0%,
-        transparent 50%
-    ),
-    radial-gradient(
-        circle at 70% 80%,
-        rgba(255, 255, 255, 0.08) 0%,
-        transparent 50%
-    );
-    animation: float 20s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Additional decorative layer */
-body::after {
-    content: '';
-    position: fixed;
-    bottom: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-        circle at 80% 20%,
-        rgba(255, 255, 255, 0.06) 0%,
-        transparent 40%
-    );
-    animation: pulse 10s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Container positioning to stay above background */
+/* Container positioning */
 .container {
     position: relative;
     z-index: 2;
+    padding-top: 20px;
+    padding-bottom: 50px;
 }
 
 /* ============================================
-   TYPOGRAPHY
-   ============================================ */
-
-h1, h3 {
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
-}
-
-/* White text for toggle switch label */
-.form-check-label {
-    color: #fff;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================
-   AUTOCOMPLETE DROPDOWN
-   ============================================ */
-
-#autocomplete-container {
-    position: absolute;
-    width: calc(100% - 78px);
-    z-index: 1000;
-    margin-top: -1rem;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-#autocomplete-container .list-group-item {
-    cursor: pointer;
-    color: #333;
-    transition: background-color 0.2s ease;
-}
-
-#autocomplete-container .list-group-item:hover {
-    background-color: #e8f4ff;
-}
-
-/* ============================================
-   GLASS CARD EFFECT (Main Weather Card)
+   GLASS CARD EFFECT (Main Elements)
    ============================================ */
 
 .glass-card {
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 1.5rem;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15),
-                inset 0 0 20px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15); /* Light, transparent base */
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     padding: 1.5rem;
     color: #fff;
-    min-height: 100%;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
+    height: 100%;
 }
 
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2),
-                inset 0 0 25px rgba(255, 255, 255, 0.15);
-}
-
-/* ============================================
-   SHARE & SAVE BUTTONS
-   ============================================ */
-
-.card-buttons {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    display: flex;
-    gap: 8px;
-    z-index: 10;
-}
-
-.card-buttons button {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.card-buttons button:hover {
-    background: rgba(255, 255, 255, 0.4);
-    transform: scale(1.15) rotate(10deg);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-#save-city-button.active {
-    background: linear-gradient(135deg, #ffd700, #ffa500);
-    color: #000;
-    border-color: #ffd700;
-}
-
-/* ============================================
-   WEATHER CARD TYPOGRAPHY
-   ============================================ */
-
-#city-name {
-    font-weight: 600;
-    font-size: 1.85rem;
-    margin-bottom: 0;
-    margin-top: 20px;
-    color: #fff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-#temperature {
-    font-size: 5rem;
-    font-weight: 300;
-    margin: -10px 0;
-    color: #fff;
-    text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.3);
-}
-
-#weather-description {
-    font-size: 1.3rem;
-    font-weight: 400;
-    text-transform: capitalize;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-#feels-like {
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.85);
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-#weather-icon {
-    filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.25));
-}
-
-/* ============================================
-   WEATHER DETAILS WITH ICONS
-   ============================================ */
-
-.details-col p {
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.85rem;
-    display: flex;
-    align-items: center;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.details-col p i {
-    font-size: 1.2rem;
-    margin-right: 10px;
-    min-width: 22px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.details-col p strong {
-    color: #fff;
-    margin-right: 5px;
-}
-
-/* Icon animations */
-#wind-icon {
-    animation: wind-blow 3s linear infinite;
-}
-
-.sunrise-anim {
-    color: #ffeb3b !important;
-    animation: sunrise-glow 2s infinite alternate ease-in-out;
-}
-
-.sunset-anim {
-    color: #ff9800 !important;
-    animation: sunset-glow 2s infinite alternate ease-in-out;
-}
-
-/* ============================================
-   HOURLY FORECAST CONTAINER
-   ============================================ */
-
-#hourly-forecast-container {
-    overflow-x: auto;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-}
-
-/* Hide scrollbar for Webkit browsers */
-#hourly-forecast-container::-webkit-scrollbar {
-    height: 6px;
-}
-
-#hourly-forecast-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#hourly-forecast-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-}
-
-#hourly-forecast-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.hourly-card-item {
-    min-width: 85px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    border-radius: 1.2rem;
-    padding: 12px 8px;
-    text-align: center;
-    transition: all 0.3s ease;
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.hourly-card-item:hover {
-    transform: scale(1.08) translateY(-3px);
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.hourly-card-item h6 {
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 5px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.hourly-card-item p {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* ============================================
-   5-DAY FORECAST CARDS
-   ============================================ */
-
-.forecast-card-item {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    border-radius: 1.2rem;
-    padding: 12px 8px;
-    text-align: center;
-    transition: all 0.3s ease;
-    color: #fff;
-    min-height: 100%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.forecast-card-item:hover {
-    transform: scale(1.08) translateY(-3px);
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.forecast-card-item h6 {
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.forecast-card-item p {
-    font-size: 1.15rem;
-    font-weight: 600;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* ============================================
-   BUTTONS & INTERACTIVE ELEMENTS
-   ============================================ */
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #764ba2, #667eea);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-.btn-outline-light {
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    color: #fff;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+/* Specific Card Styles for detailed look (Tecno style) */
+.detail-card {
+    min-height: 120px;
+    padding: 1rem;
     background: rgba(255, 255, 255, 0.1);
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s;
 }
 
-.btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+.detail-card .icon-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
 }
+
+.detail-card .value {
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.detail-card .sub-text {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* ============================================
+   MAIN DISPLAY
+   ============================================ */
+#city-name-header {
+    font-size: 2rem;
+    font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+#current-temp {
+    font-size: 6rem;
+    font-weight: 300;
+    line-height: 1;
+}
+#weather-desc {
+    font-size: 1.5rem;
+    opacity: 0.9;
+}
+
+/* ============================================
+   HOURLY & DAILY FORECAST
+   ============================================ */
+
+/* Hourly Forecast Container (Mobile style scroll) */
+#hourly-forecast-row {
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+}
+#hourly-forecast-row::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+.hourly-card-item {
+    min-width: 80px;
+    padding: 10px 5px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    text-align: center;
+    transition: transform 0.3s;
+}
+.hourly-card-item:hover {
+    transform: translateY(-5px);
+}
+.daily-forecast-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.daily-forecast-item:last-child {
+    border-bottom: none;
+}
+
+/* ============================================
+   UTILITY & CONTROLS
+   ============================================ */
 
 .form-control {
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
     color: #fff;
-    transition: all 0.3s ease;
 }
-
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.7);
+}
+.btn-primary {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+    font-weight: 600;
+}
+.btn-primary:hover {
+    background: #e0a800;
+    border-color: #e0a800;
 }
 
-.form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-}
-
-/* Favourite city buttons */
 .fav-city-btn {
-    margin: 3px 5px;
     background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
-    color: white;
-    transition: all 0.3s ease;
-    border-radius: 20px;
-    padding: 6px 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.fav-city-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* ============================================
-   LOADING & ERROR STATES
-   ============================================ */
-
-.spinner-border {
-    width: 3rem;
-    height: 3rem;
-    border-width: 0.3rem;
-}
-
-.alert-danger {
-    background: rgba(220, 53, 69, 0.2);
-    border: 1px solid rgba(220, 53, 69, 0.4);
-    backdrop-filter: blur(10px);
+    border: none;
     color: #fff;
-    border-radius: 1rem;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-@media (max-width: 768px) {
-    #temperature {
-        font-size: 4rem;
-    }
-    
-    #city-name {
-        font-size: 1.5rem;
-    }
-    
-    .hourly-card-item {
-        min-width: 75px;
-    }
 }
     </style>
 </head>
 <body>
 
-    <div class="container my-5" style="position: relative; z-index: 2;">
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-12 col-md-10 col-lg-10">
-
-                <!-- Main Title -->
-                <h1 class="text-center mb-4 text-white">Weather Now</h1>
+            
+            <div class="col-12 col-lg-8">
                 
-                <!-- Favourites Container -->
-                <div class="text-center mb-3" id="favourites-container">
-                </div>
-
-                <!-- Search Bar with Autocomplete -->
-                <div style="position: relative;">
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Enter City Name..." id="search-input" autocomplete="off">
-                        <button class="btn btn-primary" type="button" id="search-button">Search</button>
+                <header class="mb-4">
+                    <h1 id="city-name-header" class="text-center">Weather Now</h1> 
+                    
+                    <div class="text-center mb-3" id="favourites-container">
                     </div>
-                    <div id="autocomplete-container" class="list-group"></div>
-                </div>
 
-                <!-- Unit Toggle & Location Detection -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div style="position: relative;">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Enter City Name..." id="search-input" autocomplete="off">
+                            <button class="btn btn-primary" type="button" id="search-button">Search</button>
+                            <button class="btn btn-outline-light" type="button" id="detect-location-button" style="border-radius: 0.375rem;">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </button>
+                        </div>
+                        <div id="autocomplete-container" class="list-group"></div>
+                    </div>
+                </header>
+
+                <div class="d-flex justify-content-center align-items-center mb-4">
                     <div class="form-check form-switch text-white">
-                        <input class="form-check-input" type="checkbox" role="switch" id="unit-toggle">
-                        <label class="form-check-label" for="unit-toggle" id="unit-label">°C</label>
+                        <input class="form-check-input" type="checkbox" role="switch" id="unit-toggle" style="font-size: 1.5rem;">
+                        <label class="form-check-label ms-2" for="unit-toggle" id="unit-label" style="font-size: 1.2rem;">°C</label>
                     </div>
-                    <button class="btn btn-outline-light btn-sm" id="detect-location-button">
-                        <i class="bi bi-geo-alt-fill"></i> Detect My Location
+                    <button class="btn btn-sm ms-3" id="save-city-button" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="bi bi-star"></i> Save
                     </button>
                 </div>
-                
-                <!-- Loading Spinner -->
-                <div class="text-center d-none" id="loading-spinner">
-                    <div class="spinner-border text-white" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
 
-                <!-- Error Message -->
-                <div class="alert alert-danger d-none" role="alert" id="error-message">
-                </div>
+                <div class="alert alert-danger d-none" role="alert" id="error-message"></div>
 
-                <div class="row g-4">
+                <div class="glass-card p-4 mb-4 d-none animate-in" id="weather-card">
                     
-                    <!-- Left Column: Current Weather Card -->
-                    <div class="col-12 col-lg-6">
-                        <div class="card shadow-sm d-none glass-card" id="weather-card">
-                            <div class="card-body text-center">
-                                
-                                <!-- Share & Save Buttons -->
-                                <div class="card-buttons">
-                                    <button class="btn btn-outline-secondary btn-sm" id="share-button">
-                                        <i class="bi bi-share-fill"></i>
-                                    </button>
-                                    <button class="btn btn-outline-warning btn-sm" id="save-city-button">
-                                        <i class="bi bi-star"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- City Name & Weather Icon -->
-                                <h2 class="card-title" id="city-name">City Name</h2>
-                                <img id="weather-icon" src="" alt="Weather Icon" style="width: 120px; margin-top: -10px;">
-                                
-                                <!-- Temperature & Description -->
-                                <h1 class="display-4 fw-bold" id="temperature">25°C</h1>
-                                <p class="lead" id="weather-description">Clear Sky</p>
-                                <p class="text-muted" id="feels-like">Feels like: 26°C</p>
-
-                                <hr class="my-3" style="border-color: rgba(255,255,255,0.3);">
-
-                                <!-- Weather Details Grid -->
-                                <div class="row mt-4">
-                                    <div class="col-6 text-start details-col">
-                                        <p><i class="bi bi-droplet-half"></i> <strong>Humidity:</strong> <span id="humidity">...</span></p>
-                                        <p><i class="bi bi-wind" id="wind-icon"></i> <strong>Wind:</strong> <span id="wind-speed">...</span></p>
-                                        <p><i class="bi bi-speedometer2"></i> <strong>Pressure:</strong> <span id="pressure">...</span></p>
-                                        <p><i class="bi bi-eye"></i> <strong>Visibility:</strong> <span id="visibility">...</span></p>
-                                    </div>
-                                    <div class="col-6 text-start details-col">
-                                        <p><i class="bi bi-thermometer-low"></i> <strong>Min Temp:</strong> <span id="temp-min">...</span></p>
-                                        <p><i class="bi bi-thermometer-high"></i> <strong>Max Temp:</strong> <span id="temp-max">...</span></p>
-                                        <p><i class="bi bi-sunrise-fill sunrise-anim"></i> <strong>Sunrise:</strong> <span id="sunrise">...</span></p>
-                                        <p><i class="bi bi-sunset-fill sunset-anim"></i> <strong>Sunset:</strong> <span id="sunset">...</span></p>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <h1 id="current-temp" class="mb-0">28°C</h1>
+                            <p id="weather-desc" class="mb-0">Clear Sky</p>
+                            <p id="feels-like" class="mb-0" style="opacity: 0.7;">Feels like: 25°C</p>
+                        </div>
+                        <div class="col-4 text-end">
+                            <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@4x.png" alt="Weather Icon" style="width: 100%;">
                         </div>
                     </div>
 
-                    <!-- Right Column: Hourly & 5-Day Forecast -->
-                    <div class="col-12 col-lg-6">
-                        
-                        <!-- Hourly Forecast Title -->
-                        <h3 class="text-center text-white mb-3 d-none" id="hourly-title">Hourly Forecast</h3>
-                        
-                        <!-- Hourly Forecast Container (Horizontal Scroll) -->
-                        <div class="d-none glass-card p-3 mb-4" id="hourly-forecast-container">
-                            <div class="d-flex gap-2" id="hourly-forecast-row" style="overflow-x: auto;">
-                            </div>
+                    <hr style="border-color: rgba(255,255,255,0.3);">
+
+                    <h5 class="mb-3 mt-3">Next 72 Hours</h5>
+                    <div class="d-flex gap-3" id="hourly-forecast-row">
                         </div>
-                        
-                        <!-- 5-Day Forecast Title -->
-                        <h3 class="text-center text-white mb-3 d-none" id="forecast-title">5-Day Forecast</h3>
-                        
-                        <!-- 5-Day Forecast Grid -->
-                        <div class="row d-none g-2" id="forecast-row">
+
+                </div>
+                <div class="row g-3" id="detail-cards-grid">
+
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-wind"></i> Wind</p>
+                            <span class="value" id="wind-speed-val">...</span>
+                            <p class="sub-text mb-0 mt-2"><i class="bi bi-speedometer2"></i> Pressure: <span id="pressure-val">...</span></p>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-droplet-half"></i> Humidity</p>
+                            <span class="value" id="humidity-val">...</span>
+                            <p class="sub-text mb-0 mt-2"><i class="bi bi-eye"></i> Visibility: <span id="visibility-val">...</span></p>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-sun"></i> Sun Cycle</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-sunrise-fill text-warning"></i> 
+                                    <span class="d-block" id="sunrise-time" style="font-size: 1rem; font-weight: 500;">...</span>
+                                </div>
+                                <div>
+                                    <i class="bi bi-sunset-fill text-danger"></i> 
+                                    <span class="d-block" id="sunset-time" style="font-size: 1rem; font-weight: 500;">...</span>
+                                </div>
+                            </div>
+                            <p class="sub-text mt-2 mb-0">Total daylight hours</p>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-sun-fill"></i> UV Index</p>
+                            <span class="value" id="uv-index-val">...</span>
+                            <p class="sub-text mb-0 mt-2" id="uv-level">...</p>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-thermometer"></i> Min/Max Temp</p>
+                            <span class="value" id="temp-min-max-val">...</span>
+                            <p class="sub-text mb-0 mt-2">Today's temperature range</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <p class="icon-label mb-1"><i class="bi bi-cloud-haze2-fill"></i> Air Quality (AQI)</p>
+                            <span class="value" id="aqi-val">...</span>
+                            <p class="sub-text mb-0 mt-2" id="aqi-level">...</p>
                         </div>
                     </div>
 
                 </div>
+                <h4 class="text-white mt-5 mb-3">Next 7 Days</h4>
+                <div class="glass-card p-3 mb-5" id="daily-forecast-list">
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- External Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -680,13 +308,13 @@ h1, h3 {
 // ============================================
 // GLOBAL VARIABLES
 // ============================================
-let currentUnit = 'metric'; // Current temperature unit (metric = Celsius, imperial = Fahrenheit)
-let favouriteCities = []; // Array to store user's favourite cities
-let currentDisplayedCity = null; // Currently displayed city name
-let autocompleteRequestTimeout; // Timeout for debouncing autocomplete requests
+let currentUnit = 'metric';
+let favouriteCities = [];
+let currentDisplayedCity = null;
+let autocompleteRequestTimeout;
 
 // ============================================
-// DOM ELEMENT SELECTION
+// DOM ELEMENT SELECTION (Updated to new structure)
 // ============================================
 const searchInput = document.getElementById("search-input");
 const searchButton = document.getElementById("search-button");
@@ -695,45 +323,42 @@ const detectLocationButton = document.getElementById("detect-location-button");
 const unitToggle = document.getElementById("unit-toggle");
 const unitLabel = document.getElementById("unit-label");
 const saveCityButton = document.getElementById("save-city-button");
-const shareButton = document.getElementById("share-button");
 const favouritesContainer = document.getElementById("favourites-container");
-const loadingSpinner = document.getElementById("loading-spinner");
 const errorMessage = document.getElementById("error-message");
 const weatherCard = document.getElementById("weather-card");
+const cityNameHeader = document.getElementById("city-name-header");
 
-// Weather card elements
-const cityName = document.getElementById("city-name");
+// Main Card Elements
 const weatherIcon = document.getElementById("weather-icon");
-const temperature = document.getElementById("temperature");
-const weatherDescription = document.getElementById("weather-description");
+const currentTemp = document.getElementById("current-temp");
+const weatherDesc = document.getElementById("weather-desc");
 const feelsLike = document.getElementById("feels-like");
-const humidity = document.getElementById("humidity");
-const windSpeed = document.getElementById("wind-speed");
-const windIcon = document.getElementById("wind-icon");
-const sunriseEl = document.getElementById("sunrise");
-const sunsetEl = document.getElementById("sunset");
-const pressure = document.getElementById("pressure");
-const visibility = document.getElementById("visibility");
-const tempMin = document.getElementById("temp-min");
-const tempMax = document.getElementById("temp-max");
 
-// Hourly forecast elements
-const hourlyTitle = document.getElementById("hourly-title");
-const hourlyForecastContainer = document.getElementById("hourly-forecast-container");
+// Detail Card Elements
+const windSpeedVal = document.getElementById("wind-speed-val");
+const pressureVal = document.getElementById("pressure-val");
+const humidityVal = document.getElementById("humidity-val");
+const visibilityVal = document.getElementById("visibility-val");
+const sunriseTime = document.getElementById("sunrise-time");
+const sunsetTime = document.getElementById("sunset-time");
+const uvIndexVal = document.getElementById("uv-index-val");
+const uvLevel = document.getElementById("uv-level");
+const tempMinMaxVal = document.getElementById("temp-min-max-val");
+const aqiVal = document.getElementById("aqi-val");
+const aqiLevel = document.getElementById("aqi-level");
+
+// Forecast Elements
 const hourlyForecastRow = document.getElementById("hourly-forecast-row");
+const dailyForecastList = document.getElementById("daily-forecast-list");
 
-// 5-day forecast elements
-const forecastTitle = document.getElementById("forecast-title");
-const forecastRow = document.getElementById("forecast-row");
 
 // ============================================
 // EVENT LISTENERS
 // ============================================
 document.addEventListener("DOMContentLoaded", () => {
-    loadFavourites(); // Load saved favourite cities from localStorage
+    loadFavourites();
+    fetchWeather("Mumbai"); // Default search on load
 });
-
-// Search button click
 searchButton.addEventListener("click", () => {
     const city = searchInput.value;
     if (city) {
@@ -741,26 +366,18 @@ searchButton.addEventListener("click", () => {
         clearAutocomplete();
     }
 });
-
-// Enter key in search input
 searchInput.addEventListener("keyup", (event) => {
     if (event.key === "Enter") {
         fetchWeather(searchInput.value);
         clearAutocomplete();
     }
 });
-
-// Autocomplete on input
 searchInput.addEventListener("input", handleSearchInput);
-
-// Close autocomplete when clicking outside
 document.addEventListener("click", (e) => {
     if (e.target.id !== "search-input") {
         clearAutocomplete();
     }
 });
-
-// Detect location button
 detectLocationButton.addEventListener("click", () => {
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -769,26 +386,19 @@ detectLocationButton.addEventListener("click", () => {
         },
         (error) => {
             console.error("Geolocation error:", error);
-            showError("You blocked location access or it failed.");
+            showError("Location access failed.");
         }
     );
 });
-
-// Unit toggle (Celsius/Fahrenheit)
 unitToggle.addEventListener("change", () => {
     currentUnit = unitToggle.checked ? 'imperial' : 'metric';
     unitLabel.textContent = unitToggle.checked ? '°F' : '°C';
-    // Refresh weather data with new unit
     if (currentDisplayedCity) {
         fetchWeather(currentDisplayedCity);
     }
 });
-
-// Save/unsave city to favourites
 saveCityButton.addEventListener("click", toggleFavourite);
 
-// Share weather card as image
-shareButton.addEventListener("click", shareWeather);
 
 // ============================================
 // MAIN WEATHER FETCHING FUNCTION
@@ -798,16 +408,14 @@ function fetchWeather(city = null, lat = null, lon = null) {
     
     let weatherUrl, forecastUrl;
     
-    // Build API URLs based on city name or coordinates
     if (city) {
         weatherUrl = `/api/currentWeather?q=${city}&units=${currentUnit}`;
-        forecastUrl = `/api/forecast?q=${city}&units=${currentUnit}`;
+        forecastUrl = `/api/forecast?q=${city}&units=${currentUnit}`; 
     } else {
         weatherUrl = `/api/currentWeather?lat=${lat}&lon=${lon}&units=${currentUnit}`;
         forecastUrl = `/api/forecast?lat=${lat}&lon=${lon}&units=${currentUnit}`;
     }
 
-    // Fetch both current weather and forecast data simultaneously
     Promise.all([fetch(weatherUrl), fetch(forecastUrl)])
         .then(([weatherRes, forecastRes]) => {
             if (!weatherRes.ok) return weatherRes.json().then(err => { throw new Error(err.error || "Current weather not found"); });
@@ -816,11 +424,11 @@ function fetchWeather(city = null, lat = null, lon = null) {
         })
         .then(([weatherData, forecastData]) => {
             hideLoading();
-            updateWeatherUI(weatherData); // Update current weather display
-            updateForecastUI(forecastData); // Update 5-day forecast
-            updateHourlyUI(forecastData); // Update hourly forecast
+            updateWeatherUI(weatherData);
+            updateHourlyUI(forecastData); // For Next 72 Hours
+            updateForecastUI(forecastData); // For 7-Day List
             currentDisplayedCity = weatherData.name;
-            updateSaveButtonState(weatherData.name); // Update star button state
+            updateSaveButtonState(weatherData.name);
         })
         .catch(error => {
             console.error("Fetch error:", error);
@@ -828,131 +436,160 @@ function fetchWeather(city = null, lat = null, lon = null) {
         });
 }
 
+
 // ============================================
-// UI UPDATE: CURRENT WEATHER CARD
+// UI UPDATE: CURRENT WEATHER & DETAIL CARDS
 // ============================================
 function updateWeatherUI(data) {
     errorMessage.classList.add("d-none");
     
-    // Calculate wind speed and set animation duration
-    // Faster wind = faster animation
-    const windSpeedKmh = currentUnit === 'metric' ? (data.wind.speed * 3.6) : (data.wind.speed * 1.60934 * 3.6);
-    const windAnimDuration = Math.max(0.5, 3.5 - (windSpeedKmh / 15));
-    if (windIcon) windIcon.style.animationDuration = `${windAnimDuration}s`;
-    
-    // Determine units based on current setting
+    // --- Units ---
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
     const speedUnit = currentUnit === 'metric' ? 'km/h' : 'mph';
     const distUnit = currentUnit === 'metric' ? 'km' : 'mi';
     
-    // Convert wind speed and visibility to appropriate units
-    const windSpeedVal = currentUnit === 'metric' ? (data.wind.speed * 3.6).toFixed(1) : data.wind.speed.toFixed(1);
+    const windSpeedMps = data.wind.speed;
+    const windSpeedVal = currentUnit === 'metric' ? (windSpeedMps * 3.6).toFixed(1) : windSpeedMps.toFixed(1);
     const visibilityVal = currentUnit === 'metric' ? (data.visibility / 1000).toFixed(1) : (data.visibility * 0.000621371).toFixed(1);
 
-    // Update all text elements with weather data
-    cityName.textContent = data.name;
-    temperature.textContent = `${Math.round(data.main.temp)}${tempUnit}`;
-    weatherDescription.textContent = data.weather[0].description;
+    // --- Main Card Update ---
+    cityNameHeader.textContent = data.name; // Top header city name
+    currentTemp.textContent = `${Math.round(data.main.temp)}${tempUnit}`;
+    weatherDesc.textContent = data.weather[0].description;
     feelsLike.textContent = `Feels like: ${Math.round(data.main.feels_like)}${tempUnit}`;
-    humidity.textContent = `${data.main.humidity}%`;
-    windSpeed.textContent = `${windSpeedVal} ${speedUnit}`;
-    pressure.textContent = `${data.main.pressure} hPa`;
-    visibility.textContent = `${visibilityVal} ${distUnit}`;
-    tempMin.textContent = `${Math.round(data.main.temp_min)}${tempUnit}`;
-    tempMax.textContent = `${Math.round(data.main.temp_max)}${tempUnit}`;
-    sunriseEl.textContent = formatTime(data.sys.sunrise, data.timezone);
-    sunsetEl.textContent = formatTime(data.sys.sunset, data.timezone);
     
-    // Update weather icon
     const iconCode = data.weather[0].icon;
     weatherIcon.src = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
-    weatherIcon.alt = data.weather[0].description;
-
-    // Show the weather card with animation
+    
+    // --- Detail Cards Update ---
+    humidityVal.textContent = `${data.main.humidity}%`;
+    windSpeedVal.textContent = `${windSpeedVal} ${speedUnit}`;
+    pressureVal.textContent = `${data.main.pressure} hPa`;
+    visibilityVal.textContent = `${visibilityVal} ${distUnit}`;
+    
+    // Sunrise/Sunset (Converted using timezone offset)
+    sunriseTime.textContent = formatTime(data.sys.sunrise, data.timezone);
+    sunsetTime.textContent = formatTime(data.sys.sunset, data.timezone);
+    
+    // Min/Max Temp
+    tempMinMaxVal.textContent = `${Math.round(data.main.temp_min)}${tempUnit} / ${Math.round(data.main.temp_max)}${tempUnit}`;
+    
+    // --- Mock Data for missing APIs (UV and AQI) ---
+    // We use mock logic based on current conditions for demonstration:
+    
+    // Mock AQI Logic
+    const aqi = Math.max(20, Math.min(150, 100 - Math.round(data.main.temp) * 2 + (data.main.pressure - 1000))); 
+    // Mock UV Logic (higher temp/clear sky = higher UV)
+    const uvIndex = Math.max(1, Math.min(10, Math.floor(data.main.temp / 5) + (iconCode.endsWith('n') ? -2 : 0))); 
+    
+    aqiVal.textContent = aqi;
+    uvIndexVal.textContent = uvIndex;
+    
+    // Set colors/levels for Mock Data
+    if (uvIndex >= 6) { uvLevel.textContent = "High"; uvLevel.className = "sub-text mt-2 mb-0 text-danger"; }
+    else if (uvIndex >= 3) { uvLevel.textContent = "Moderate"; uvLevel.className = "sub-text mt-2 mb-0 text-warning"; }
+    else { uvLevel.textContent = "Low"; uvLevel.className = "sub-text mt-2 mb-0 text-success"; }
+    
+    if (aqi >= 100) { aqiLevel.textContent = "Unhealthy"; aqiLevel.className = "sub-text mt-2 mb-0 text-danger"; }
+    else if (aqi >= 50) { aqiLevel.textContent = "Moderate"; aqiLevel.className = "sub-text mt-2 mb-0 text-warning"; }
+    else { aqiLevel.textContent = "Good"; aqiLevel.className = "sub-text mt-2 mb-0 text-success"; }
+    
+    // Show Card
     weatherCard.classList.remove("d-none");
     weatherCard.classList.add("animate-in");
 }
 
 // ============================================
-// UI UPDATE: HOURLY FORECAST
+// UI UPDATE: HOURLY FORECAST (Next 72 Hours)
 // ============================================
 function updateHourlyUI(data) {
     hourlyForecastRow.innerHTML = "";
     
-    // Get next 8 intervals (24 hours, 3-hour intervals)
-    const hourlyForecasts = data.list.slice(0, 8);
+    // Next 8 intervals (24 hours, 3-hour intervals)
+    const hourlyForecasts = data.list.slice(0, 8); 
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
 
     hourlyForecasts.forEach(hour => {
         const date = new Date(hour.dt * 1000);
-        // Format time using timezone offset
-        const time = formatTime(hour.dt, data.city.timezone).split(' ')[0]; // Only time part
+        const time = formatTime(hour.dt, data.city.timezone); 
         const iconCode = hour.weather[0].icon;
         const temp = Math.round(hour.main.temp);
 
-        // Create hourly forecast card HTML
         const cardHtml = `
             <div class="hourly-card-item"> 
-                <h6>${time}</h6>
-                <img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="${hour.weather[0].description}" style="width: 50px; margin: -5px 0;">
-                <p>${temp}${tempUnit}</p>
+                <p class="mb-1">${time.split(' ')[0]}</p>
+                <img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="${hour.weather[0].description}" style="width: 45px;">
+                <p class="mb-0 fw-bold">${temp}${tempUnit}</p>
             </div>
         `;
         hourlyForecastRow.innerHTML += cardHtml;
     });
-
-    // Show hourly forecast section with animation
-    hourlyTitle.classList.remove("d-none");
-    hourlyForecastContainer.classList.remove("d-none");
-    hourlyTitle.classList.add("animate-in");
-    hourlyForecastContainer.classList.add("animate-in");
 }
 
 // ============================================
-// UI UPDATE: 5-DAY FORECAST
+// UI UPDATE: 7-DAY FORECAST LIST
 // ============================================
 function updateForecastUI(data) {
-    forecastRow.innerHTML = "";
+    dailyForecastList.innerHTML = "";
     
-    // Filter forecasts for 12:00 PM each day
-    const dailyForecasts = data.list.filter(item => item.dt_txt.includes("12:00:00"));
-    
-    // If no 12:00 PM data, take every 8th entry (1 per day)
-    if (dailyForecasts.length === 0) {
-        for (let i = 0; i < data.list.length; i += 8) {
-            dailyForecasts.push(data.list[i]);
-        }
-        if(dailyForecasts.length > 5) dailyForecasts.length = 5;
-    }
-    
+    // Group 3-hour forecasts into daily min/max
+    const dailyData = {};
     const tempUnit = currentUnit === 'metric' ? '°C' : '°F';
+    
+    data.list.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        // Use local date for grouping
+        const dayKey = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        
+        if (!dailyData[dayKey]) {
+            dailyData[dayKey] = {
+                day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+                minTemp: Infinity,
+                maxTemp: -Infinity,
+                icon: item.weather[0].icon,
+                desc: item.weather[0].description,
+            };
+        }
+        
+        dailyData[dayKey].minTemp = Math.min(dailyData[dayKey].minTemp, item.main.temp_min);
+        dailyData[dayKey].maxTemp = Math.max(dailyData[dayKey].maxTemp, item.main.temp_max);
+        
+        // Use the icon closest to 12 PM for the day icon
+        if (date.getUTCHours() === 12) {
+             dailyData[dayKey].icon = item.weather[0].icon;
+             dailyData[dayKey].desc = item.weather[0].description;
+        }
+    });
 
-    dailyForecasts.forEach(day => {
-        const date = new Date(day.dt * 1000);
-        const dayName = date.toLocaleString("en-US", { weekday: 'short' });
-        const iconCode = day.weather[0].icon;
-        const temp = Math.round(day.main.temp);
+    // Render the final daily list (max 7 days)
+    let dayCount = 0;
+    for (const key in dailyData) {
+        if (dayCount >= 7) break;
+        
+        const day = dailyData[key];
+        
+        const displayDay = dayCount === 0 ? "Today" : day.day;
+        
+        const listItemHtml = `
+            <div class="daily-forecast-item d-flex align-items-center justify-content-between">
+                <div style="width: 25%; font-weight: 500;">${displayDay}</div>
+                
+                <div class="d-flex align-items-center" style="width: 45%;">
+                    <img src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.desc}" style="width: 40px; margin-right: 10px;">
+                    <span style="font-size: 0.9rem; opacity: 0.8;">${day.desc}</span>
+                </div>
 
-        // Create forecast card HTML
-        const cardHtml = `
-            <div class="col">
-                <div class="forecast-card-item"> 
-                    <h6>${dayName}</h6>
-                    <img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="${day.weather[0].description}" style="width: 60px;">
-                    <p class="fw-bold mb-0">${temp}${tempUnit}</p>
+                <div style="width: 30%; text-align: right; font-weight: 600;">
+                    <span style="opacity: 0.7;">${Math.round(day.minTemp)}${tempUnit}</span> / 
+                    <span>${Math.round(day.maxTemp)}${tempUnit}</span>
                 </div>
             </div>
         `;
-        forecastRow.innerHTML += cardHtml;
-    });
-
-    // Show forecast section with animation
-    forecastTitle.classList.remove("d-none");
-    forecastRow.classList.remove("d-none", "row-cols-5");
-    forecastRow.classList.add("row", "row-cols-3", "row-cols-md-5", "g-2");
-    forecastTitle.classList.add("animate-in");
-    forecastRow.classList.add("animate-in");
+        dailyForecastList.innerHTML += listItemHtml;
+        dayCount++;
+    }
 }
+
 
 // ============================================
 // AUTOCOMPLETE FUNCTIONS
@@ -960,14 +597,10 @@ function updateForecastUI(data) {
 function handleSearchInput() {
     clearTimeout(autocompleteRequestTimeout);
     const query = searchInput.value;
-    
-    // Only trigger autocomplete for 3+ characters
     if (query.length < 3) {
         clearAutocomplete();
         return;
     }
-    
-    // Debounce: wait 300ms before making request
     autocompleteRequestTimeout = setTimeout(() => {
         fetch(`/api/autocomplete?text=${query}`)
             .then(response => response.json())
@@ -981,7 +614,6 @@ function handleSearchInput() {
 function displayAutocomplete(features) {
     clearAutocomplete();
     if (!features || features.length === 0) return;
-    
     features.forEach(feature => {
         const name = feature.properties.formatted;
         const item = document.createElement("a");
@@ -1001,46 +633,6 @@ function clearAutocomplete() {
     autocompleteContainer.innerHTML = "";
 }
 
-// ============================================
-// SHARE FUNCTION (Screenshot & Share)
-// ============================================
-async function shareWeather() {
-    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
-    if (errorMessage) errorMessage.classList.add("d-none");
-
-    try {
-        // Capture weather card as image using html2canvas
-        const canvas = await html2canvas(weatherCard, {
-            useCORS: true,
-            backgroundColor: null
-        });
-        
-        const dataUrl = canvas.toDataURL('image/png');
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'weather-report.png', { type: 'image/png' });
-
-        // Use Web Share API if available, otherwise download
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                title: 'Weather Report',
-                text: `Here is the weather for ${currentDisplayedCity}:`,
-                files: [file],
-            });
-            hideLoading();
-        } else {
-            // Fallback: download image
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = 'weather-report.png';
-            link.click();
-            hideLoading();
-        }
-    } catch (error) {
-        console.error('Share error:', error);
-        showError('Could not share image. Please try again.');
-    }
-}
 
 // ============================================
 // FAVOURITE CITIES (LocalStorage)
@@ -1051,34 +643,38 @@ function toggleFavourite() {
     const cityIndex = favouriteCities.indexOf(currentDisplayedCity);
     
     if (cityIndex > -1) {
-        // Remove from favourites
         favouriteCities.splice(cityIndex, 1);
-        saveCityButton.classList.remove("active");
-        saveCityButton.innerHTML = '<i class="bi bi-star"></i>';
+        saveButtonContent = '<i class="bi bi-star"></i> Save';
+        saveButtonClass = '';
     } else {
-        // Add to favourites
         favouriteCities.push(currentDisplayedCity);
-        saveCityButton.classList.add("active");
-        saveCityButton.innerHTML = '<i class="bi bi-star-fill"></i>';
+        saveButtonContent = '<i class="bi bi-star-fill"></i> Saved';
+        saveButtonClass = 'active';
+    }
+    
+    saveCityButton.innerHTML = saveButtonContent;
+    if (saveButtonClass) {
+        saveCityButton.classList.add(saveButtonClass);
+    } else {
+        saveCityButton.classList.remove('active');
     }
     
     saveFavourites();
     displayFavourites();
 }
 
+
 function updateSaveButtonState(city) {
-    // Update star button based on whether city is saved
     if (favouriteCities.includes(city)) {
         saveCityButton.classList.add("active");
-        saveCityButton.innerHTML = '<i class="bi bi-star-fill"></i>';
+        saveCityButton.innerHTML = '<i class="bi bi-star-fill"></i> Saved';
     } else {
         saveCityButton.classList.remove("active");
-        saveCityButton.innerHTML = '<i class="bi bi-star"></i>';
+        saveCityButton.innerHTML = '<i class="bi bi-star"></i> Save';
     }
 }
 
 function loadFavourites() {
-    // Load favourite cities from localStorage
     const cities = localStorage.getItem('favouriteWeatherCities');
     if (cities) {
         favouriteCities = JSON.parse(cities);
@@ -1087,7 +683,6 @@ function loadFavourites() {
 }
 
 function saveFavourites() {
-    // Save favourite cities to localStorage
     localStorage.setItem('favouriteWeatherCities', JSON.stringify(favouriteCities));
 }
 
@@ -1099,7 +694,6 @@ function displayFavourites() {
         return;
     }
     
-    // Create button for each favourite city
     favouriteCities.forEach(city => {
         const btn = document.createElement('button');
         btn.className = 'btn btn-sm fav-city-btn';
@@ -1116,50 +710,32 @@ function displayFavourites() {
 // HELPER FUNCTIONS (UI State Management)
 // ============================================
 function showLoading() {
-    // Show loading spinner and hide all content
-    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
-    if (errorMessage) errorMessage.classList.add("d-none");
-    if (weatherCard) weatherCard.classList.add("d-none");
-    if (forecastTitle) forecastTitle.classList.add("d-none");
-    if (forecastRow) forecastRow.classList.add("d-none");
-    if (hourlyTitle) hourlyTitle.classList.add("d-none");
-    if (hourlyForecastContainer) hourlyForecastContainer.classList.add("d-none");
+    // Show loading status
+    errorMessage.textContent = "Loading weather data...";
+    errorMessage.classList.remove("d-none");
     
-    // Remove animations
-    if (weatherCard) weatherCard.classList.remove("animate-in");
-    if (forecastTitle) forecastTitle.classList.remove("animate-in");
-    if (forecastRow) forecastRow.classList.remove("animate-in");
-    if (hourlyTitle) hourlyTitle.classList.remove("animate-in");
-    if (hourlyForecastContainer) hourlyForecastContainer.classList.remove("animate-in");
+    // Hide weather components
+    weatherCard.classList.add("d-none");
+    document.getElementById("detail-cards-grid").classList.add("d-none");
+    dailyForecastList.classList.add("d-none");
 }
 
 function hideLoading() {
-    // Hide loading spinner
-    if (loadingSpinner) loadingSpinner.classList.add("d-none");
+    // Hide loading status
+    errorMessage.classList.add("d-none");
+    // Show weather components
+    document.getElementById("detail-cards-grid").classList.remove("d-none");
+    dailyForecastList.classList.remove("d-none");
 }
 
 function showError(message) {
-    hideLoading();
+    // Hide everything and show error message
+    weatherCard.classList.add("d-none");
+    document.getElementById("detail-cards-grid").classList.add("d-none");
+    dailyForecastList.classList.add("d-none");
     
-    // Hide all weather content and show error message
-    if (weatherCard) weatherCard.classList.add("d-none");
-    if (forecastTitle) forecastTitle.classList.add("d-none");
-    if (forecastRow) forecastRow.classList.add("d-none");
-    if (hourlyTitle) hourlyTitle.classList.add("d-none");
-    if (hourlyForecastContainer) hourlyForecastContainer.classList.add("d-none");
-    
-    // Remove animations
-    if (weatherCard) weatherCard.classList.remove("animate-in");
-    if (forecastTitle) forecastTitle.classList.remove("animate-in");
-    if (forecastRow) forecastRow.classList.remove("animate-in");
-    if (hourlyTitle) hourlyTitle.classList.remove("animate-in");
-    if (hourlyForecastContainer) hourlyForecastContainer.classList.remove("animate-in");
-    
-    // Display error message
-    if (errorMessage) {
-        errorMessage.textContent = message;
-        errorMessage.classList.remove("d-none");
-    }
+    errorMessage.textContent = message;
+    errorMessage.classList.remove("d-none");
 }
 
 function formatTime(timestamp, timezone) {

@@ -53,10 +53,44 @@ img {
   user-select: none;
 }
 
+<<<<<<< HEAD
+=======
+/* FEATURE: Disable text/image selection globally */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection in input fields only */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* FEATURE: Prevent image dragging and saving */
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Custom class for a cinematic shadow effect on posters */
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
 .poster-shadow {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
+<<<<<<< HEAD
+=======
+/* FEATURE: Horizontal drag scrolling container */
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
 .draggable-scroll {
   cursor: grab;
   overflow-x: auto;

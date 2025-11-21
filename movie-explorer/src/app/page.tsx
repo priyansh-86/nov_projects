@@ -40,6 +40,7 @@ interface MovieData {
   recommendations: { results: RecommendedMovie[] };
 }
 
+<<<<<<< HEAD
 interface ActorFilmography {
   actor: {
     name: string;
@@ -62,8 +63,36 @@ interface ActorFilmography {
 const useLocalStorage = (key: string, defaultValue: string[]) => {
   const [value, setValue] = useState<string[]>(defaultValue);
   const [isClient, setIsClient] = useState(false);
+=======
+// --- FIXED Custom Hook for LocalStorage (Hydration Safe) ---
+const useLocalStorage = (key: string, defaultValue: string[]) => {
+  // Start with default value (same on server and client)
+  const [value, setValue] = useState<string[]>(defaultValue);
+  const [isClient, setIsClient] = useState(false);
 
+  // Mark when we're on client side
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load from localStorage only after component mounts (client-side only)
+  useEffect(() => {
+    if (!isClient) return;
+
+    try {
+      const item = localStorage.getItem(key);
+      if (item) {
+        setValue(JSON.parse(item));
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }, [key, isClient]);
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
+
+  // Save to localStorage whenever value changes
+  useEffect(() => {
+<<<<<<< HEAD
     setIsClient(true);
   }, []);
 
@@ -84,6 +113,15 @@ const useLocalStorage = (key: string, defaultValue: string[]) => {
     } catch (error) {
       console.error('Error saving to localStorage:', error);
     }
+=======
+    if (!isClient) return;
+
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
   }, [key, value, isClient]);
 
   return [value, setValue] as const;
@@ -95,6 +133,56 @@ const useDragScroll = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+<<<<<<< HEAD
+=======
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      setIsDragging(true);
+      setStartX(e.pageX - element.offsetLeft);
+      setScrollLeft(element.scrollLeft);
+      element.style.cursor = 'grabbing';
+    };
+
+    const handleMouseLeave = () => {
+      setIsDragging(false);
+      element.style.cursor = 'grab';
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      element.style.cursor = 'grab';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - element.offsetLeft;
+      const walk = (x - startX) * 2;
+      element.scrollLeft = scrollLeft - walk;
+    };
+
+    element.addEventListener('mousedown', handleMouseDown);
+    element.addEventListener('mouseleave', handleMouseLeave);
+    element.addEventListener('mouseup', handleMouseUp);
+    element.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('mouseleave', handleMouseLeave);
+      element.removeEventListener('mouseup', handleMouseUp);
+      element.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isDragging, startX, scrollLeft]);
+
+  return ref;
+};
+
+// --- Helper Components for Clean UI ---
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
 
   useEffect(() => {
     const element = ref.current;
@@ -277,6 +365,35 @@ const MovieSkeleton: React.FC = () => (
           <div className="h-8 w-32 bg-gray-700 rounded-full"></div>
           <div className="h-8 w-24 bg-gray-700 rounded-full"></div>
         </div>
+<<<<<<< HEAD
+=======
+        <div className="space-y-2">
+          <div className="h-6 bg-gray-700 rounded w-24"></div>
+          <div className="flex gap-2">
+            <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
+            <div className="h-8 w-24 bg-gray-700 rounded-full"></div>
+            <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-6 bg-gray-700 rounded w-32"></div>
+          <div className="h-4 bg-gray-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+        </div>
+      </div>
+    </div>
+    <div className="mt-8">
+      <div className="h-8 bg-gray-700 rounded w-32 mb-4"></div>
+      <div className="flex gap-4 overflow-x-hidden">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex-shrink-0 w-32">
+            <div className="w-full h-48 bg-gray-700 rounded-lg"></div>
+            <div className="mt-2 h-4 bg-gray-700 rounded"></div>
+            <div className="mt-1 h-3 bg-gray-700 rounded w-3/4"></div>
+          </div>
+        ))}
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
       </div>
     </div>
   </div>
@@ -302,7 +419,11 @@ const CastMemberCard: React.FC<{
         draggable="false"
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
+<<<<<<< HEAD
         className="w-full h-48 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
+=======
+        className="w-full h-48 object-cover rounded-lg shadow-md"
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
       />
       <p className="mt-2 text-sm font-semibold group-hover:text-accent transition-colors">
         {member.name}
@@ -426,12 +547,18 @@ const MovieDetails: React.FC<{
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Cast Section with Actor Click */}
       {topCast.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">
             Top Cast <span className="text-sm text-gray-400">(Click to view filmography)</span>
           </h3>
+=======
+      {topCast.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-2xl font-semibold mb-4">Top Cast</h3>
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
           <div 
             ref={castScrollRef}
             className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
@@ -447,7 +574,10 @@ const MovieDetails: React.FC<{
         </div>
       )}
 
+<<<<<<< HEAD
       {/* Recommendations Section */}
+=======
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
       {recommendations.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">Similar Movies You Might Like</h3>
@@ -466,7 +596,6 @@ const MovieDetails: React.FC<{
         </div>
       )}
 
-      {/* Reviews Section */}
       {movie.reviews.results.length > 0 && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold mb-4">User Reviews</h3>
@@ -501,6 +630,22 @@ export default function Home() {
     return () => document.removeEventListener('contextmenu', handleContextMenu);
   }, []);
 
+<<<<<<< HEAD
+=======
+  // Disable right-click on entire page
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    
+    document.addEventListener('contextmenu', handleContextMenu);
+    
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
+
+>>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
   const addToHistory = useCallback((searchTerm: string) => {
     setSearchHistory((prev) => {
       const newHistory = [searchTerm, ...prev.filter(item => item !== searchTerm)];

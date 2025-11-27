@@ -20,51 +20,40 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Fetching actor data for ID:', actorId);
 
-    // Fetch actor details and movie credits
+    // Actor details aur movie credits fetch karein
     const actorUrl = `https://api.themoviedb.org/3/person/${actorId}?api_key=${apiKey}`;
     const creditsUrl = `https://api.themoviedb.org/3/person/${actorId}/movie_credits?api_key=${apiKey}`;
 
     const [actorResponse, creditsResponse] = await Promise.all([
-      fetch(actorUrl, { 
-        cache: 'no-store',
-        headers: { 'Accept': 'application/json' }
-      }),
-      fetch(creditsUrl, { 
-        cache: 'no-store',
-        headers: { 'Accept': 'application/json' }
-      })
+      fetch(actorUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } }),
+      fetch(creditsUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } })
     ]);
 
-    if (!actorResponse.ok) {
-      const errorText = await actorResponse.text();
-      console.error('Actor API error:', actorResponse.status, errorText);
-      return NextResponse.json({ 
-        message: 'Failed to fetch actor data' 
-      }, { status: actorResponse.status });
-    }
-
-    if (!creditsResponse.ok) {
-      const errorText = await creditsResponse.text();
-      console.error('Credits API error:', creditsResponse.status, errorText);
-      return NextResponse.json({ 
-        message: 'Failed to fetch actor credits' 
-      }, { status: creditsResponse.status });
+    if (!actorResponse.ok || !creditsResponse.ok) {
+      return NextResponse.json({ message: 'Failed to fetch actor data' }, { status: 404 });
     }
 
     const actorData = await actorResponse.json();
     const creditsData = await creditsResponse.json();
 
-    console.log('Actor data fetched successfully:', actorData.name);
+    const today = new Date().toISOString().split('T')[0]; // Aaj ki date 'YYYY-MM-DD' format mein
 
-    // Sort movies by popularity and get top movies
-    const sortedMovies = (creditsData.cast || [])
-      .filter((movie: any) => movie.poster_path) // Only movies with posters
-      .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0))
-      .slice(0, 15); // Top 15 movies
+    // 1. Upcoming Movies (Jo future mein release hongi)
+    const upcomingMovies = (creditsData.cast || [])
+      .filter((m: any) => m.release_date && m.release_date > today)
+      .sort((a: any, b: any) => new Date(a.release_date).getTime() - new Date(b.release_date).getTime()) // Date wise sort
+      .slice(0, 10); // Top 10 upcoming
+
+    // 2. Past Top Movies (Jo release ho chuki hain, rating ke hisaab se sort)
+    const pastMovies = (creditsData.cast || [])
+      .filter((m: any) => m.release_date && m.release_date <= today && m.poster_path)
+      .sort((a: any, b: any) => (b.vote_average || 0) - (a.vote_average || 0)) // High rating pehle
+      .slice(0, 10); // Top 10 past movies
 
     return NextResponse.json({
       actor: actorData,
-      movies: sortedMovies
+      pastMovies: pastMovies,     // Ye Frontend mein required hai
+      upcomingMovies: upcomingMovies // Ye bhi Frontend mein required hai
     }, { status: 200 });
 
   } catch (error: unknown) {

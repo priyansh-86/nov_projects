@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Play, FileVideo, X, LogOut, RefreshCw } from "lucide-react";
+import { Loader2, Play, FileVideo, X, LogOut, RefreshCw, Copy, CheckCircle } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 interface FileItem {
@@ -16,14 +16,13 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentVideo, setCurrentVideo] = useState<FileItem | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      // Query: Search for video files, exclude trashed files
       const q = "mimeType contains 'video/' and trashed = false";
       const fields = "files(id, name, mimeType, thumbnailLink)";
-      // Note: pageSize=100 limits to 100 videos. You can increase/paginate if needed.
       const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&pageSize=100`;
 
       const res = await fetch(url, {
@@ -41,14 +40,27 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchFiles();
   }, [accessToken]);
 
+  // Logic to check if browser can play this file
+  const isBrowserPlayable = (mimeType: string) => {
+    return mimeType.includes("mp4") || mimeType.includes("webm");
+  };
+
+  const copyStreamLink = () => {
+    if (!currentVideo) return;
+    // Create the full stream URL
+    const streamUrl = `${window.location.origin}/api/stream?fileId=${currentVideo.id}`;
+    navigator.clipboard.writeText(streamUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="w-full h-full pb-20">
-      {/* Navbar Area */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-8 backdrop-blur-xl bg-white/5 p-5 rounded-2xl border border-white/10 shadow-lg shadow-black/20">
         <div>
             <h2 className="text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
@@ -60,7 +72,6 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
         <div className="flex gap-3">
             <button 
                 onClick={fetchFiles}
-                title="Refresh Library"
                 className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
             >
                 <RefreshCw size={20} />
@@ -74,90 +85,117 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* Grid */}
       {loading ? (
         <div className="flex flex-col justify-center items-center h-64 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
           <p className="text-gray-400 animate-pulse">Scanning your Drive...</p>
         </div>
       ) : files.length === 0 ? (
-        <div className="text-center text-gray-500 mt-20 p-10 border border-dashed border-white/10 rounded-2xl">
-            <FileVideo className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <h3 className="text-xl font-medium">No videos found</h3>
-            <p className="text-sm mt-2">Upload some videos to your Google Drive to see them here.</p>
-        </div>
+        <div className="text-center text-gray-500 mt-20">No videos found.</div>
       ) : (
-        /* Video Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {files.map((file) => (
             <div
               key={file.id}
               onClick={() => setCurrentVideo(file)}
-              className="group cursor-pointer bg-[#1a1a1a]/40 hover:bg-[#1a1a1a]/80 border border-white/5 hover:border-purple-500/50 rounded-xl p-3 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm shadow-lg hover:shadow-purple-500/10"
+              className="group cursor-pointer bg-[#1a1a1a]/40 hover:bg-[#1a1a1a]/80 border border-white/5 hover:border-purple-500/50 rounded-xl p-3 transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm"
             >
-              {/* Thumbnail Container */}
               <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden mb-3 flex items-center justify-center">
                 {file.thumbnailLink ? (
                   <img 
                     src={file.thumbnailLink} 
                     alt={file.name} 
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" 
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-500" 
                     referrerPolicy="no-referrer"
                   />
                 ) : (
                   <FileVideo className="w-12 h-12 text-gray-600" />
                 )}
                 
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                  <div className="w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-600/40 transform scale-75 group-hover:scale-100 transition-transform">
-                     <Play className="w-6 h-6 fill-white text-white ml-1" />
+                {/* Play Icon with Type Indicator */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-[2px]">
+                   {!isBrowserPlayable(file.mimeType) && (
+                       <span className="absolute top-2 right-2 text-[10px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-2 py-0.5 rounded font-mono">
+                           MKV/EXT
+                       </span>
+                   )}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 ${isBrowserPlayable(file.mimeType) ? 'bg-purple-600 shadow-purple-600/40' : 'bg-orange-600 shadow-orange-600/40'}`}>
+                     <Play className="w-5 h-5 fill-white text-white ml-1" />
                   </div>
                 </div>
               </div>
-              
-              {/* Video Info */}
-              <div className="px-1">
-                <h3 className="text-sm font-medium text-gray-200 truncate group-hover:text-purple-300 transition-colors">
-                    {file.name}
-                </h3>
-              </div>
+              <h3 className="text-sm font-medium text-gray-200 truncate px-1">{file.name}</h3>
             </div>
           ))}
         </div>
       )}
 
-      {/* Fullscreen Video Player Modal */}
+      {/* Player / Info Modal */}
       {currentVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-6xl bg-[#121212] rounded-2xl overflow-hidden shadow-2xl shadow-purple-900/20 border border-white/10 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-6xl bg-[#121212] rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col max-h-[90vh]">
             
-            {/* Header */}
             <div className="flex justify-between items-center p-4 border-b border-white/10 bg-white/5">
-                <div className="flex items-center gap-3 overflow-hidden">
-                    <FileVideo className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    <h3 className="font-medium text-gray-200 truncate pr-4">{currentVideo.name}</h3>
-                </div>
+                <h3 className="font-medium text-gray-200 truncate pr-4">{currentVideo.name}</h3>
                 <button 
                     onClick={() => setCurrentVideo(null)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
-                    <X className="w-6 h-6" />
+                    <X className="w-6 h-6 text-gray-400 hover:text-white" />
                 </button>
             </div>
 
-            {/* Player Container */}
-            <div className="flex-1 bg-black flex items-center justify-center relative group">
-              {/* VIDEO TAG pointing to our API Proxy */}
-              <video
-                controls
-                autoPlay
-                className="w-full h-full max-h-[80vh] outline-none"
-                src={`/api/stream?fileId=${currentVideo.id}`}
-                controlsList="nodownload" 
-              >
-                Your browser does not support the video tag.
-              </video>
+            {/* Conditional Player */}
+            <div className="flex-1 bg-black flex items-center justify-center relative min-h-[400px]">
+              
+              {isBrowserPlayable(currentVideo.mimeType) ? (
+                // OPTION 1: Browser Native Player (MP4/WebM)
+                <video
+                  controls
+                  autoPlay
+                  className="w-full h-full max-h-[80vh] outline-none"
+                  src={`/api/stream?fileId=${currentVideo.id}`}
+                  controlsList="nodownload" 
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                // OPTION 2: External Player Instruction (MKV/Others)
+                <div className="flex flex-col items-center text-center p-8 max-w-lg">
+                    <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mb-6 border border-orange-500/20">
+                        <FileVideo className="w-10 h-10 text-orange-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Browser cannot play this format (MKV)</h2>
+                    <p className="text-gray-400 mb-8">
+                        Browsers natively support MP4. For high-quality MKV/HEVC files, use VLC Media Player to stream directly without downloading.
+                    </p>
+
+                    <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Step 1: Copy Stream Link</p>
+                        <div className="flex gap-2">
+                            <input 
+                                readOnly 
+                                value={`${window.location.origin}/api/stream?fileId=${currentVideo.id}`}
+                                className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 w-full outline-none"
+                            />
+                            <button 
+                                onClick={copyStreamLink}
+                                className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-medium"
+                            >
+                                {copied ? <CheckCircle size={18} /> : <Copy size={18} />}
+                                {copied ? "Copied" : "Copy"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="text-left w-full space-y-2 text-sm text-gray-400">
+                        <p><strong>Step 2:</strong> Open VLC Media Player.</p>
+                        <p><strong>Step 3:</strong> Press <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-gray-200 font-mono">Ctrl + N</kbd> (Open Network Stream).</p>
+                        <p><strong>Step 4:</strong> Paste the link and click Play.</p>
+                    </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

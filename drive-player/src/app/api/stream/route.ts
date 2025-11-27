@@ -5,24 +5,34 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session: any = await getServerSession(authOptions);
-    if (!session?.accessToken) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const fileId = searchParams.get("fileId");
+    const tokenFromUrl = searchParams.get("token"); // Token from VLC URL
+
+    let accessToken = tokenFromUrl;
+
+    // Agar URL me token nahi hai, to Session check karo (Browser play ke liye)
+    if (!accessToken) {
+        const session: any = await getServerSession(authOptions);
+        if (session?.accessToken) {
+            accessToken = session.accessToken;
+        }
+    }
+
+    // Agar abhi bhi token nahi mila, to block karo
+    if (!accessToken) {
+      return new NextResponse("Unauthorized: No token provided", { status: 401 });
+    }
+
     if (!fileId) return new NextResponse("File ID missing", { status: 400 });
 
-    // 1. Browser se pucho: "Kitna data chahiye?" (Range Header)
+    // Range Header (VLC seeking ke liye bahut zaroori hai)
     const range = req.headers.get("range");
 
-    // 2. Google Drive se data maango (With Range support)
     const driveUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
     
-    // Agar Range hai, toh Google ko bhi wahi Range bhejo
     const fetchHeaders: any = {
-      Authorization: `Bearer ${session.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     };
     if (range) {
       fetchHeaders["Range"] = range;
@@ -31,15 +41,12 @@ export async function GET(req: NextRequest) {
     const response = await fetch(driveUrl, { headers: fetchHeaders });
 
     if (!response.ok) {
-        // Agar Google ne error diya
         return new NextResponse(response.statusText, { status: response.status });
     }
 
-    // 3. Response Headers prepare karo
     const headers = new Headers();
     headers.set("Content-Type", response.headers.get("Content-Type") || "video/mp4");
     
-    // Important: Content-Length aur Content-Range forward karna zaroori hai
     if (response.headers.get("Content-Length")) {
       headers.set("Content-Length", response.headers.get("Content-Length")!);
     }
@@ -47,10 +54,8 @@ export async function GET(req: NextRequest) {
       headers.set("Content-Range", response.headers.get("Content-Range")!);
     }
     
-    // Accept-Ranges batata hai ki hum seeking support karte hain
     headers.set("Accept-Ranges", "bytes");
 
-    // 4. Stream return karo (Status 206 for Partial Content is crucial for video)
     return new NextResponse(response.body, {
       status: response.status === 206 ? 206 : 200,
       headers,

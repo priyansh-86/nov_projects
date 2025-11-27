@@ -3,10 +3,10 @@
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
-// Define interfaces
+// --- Interfaces ---
 interface CastMember {
   cast_id: number;
-  id: number; // Actor ID
+  id: number;
   name: string;
   character: string;
   profile_path: string | null;
@@ -40,7 +40,7 @@ interface MovieData {
   recommendations: { results: RecommendedMovie[] };
 }
 
-<<<<<<< HEAD
+// Updated Actor Data Interface
 interface ActorFilmography {
   actor: {
     name: string;
@@ -49,559 +49,210 @@ interface ActorFilmography {
     place_of_birth: string;
     profile_path: string | null;
   };
-  movies: Array<{
-    id: number;
-    title: string;
-    character: string;
-    poster_path: string | null;
-    release_date: string;
-    vote_average: number;
-  }>;
+  pastMovies: Array<any>;
+  upcomingMovies: Array<any>;
 }
 
-// --- Custom Hook for LocalStorage (Hydration Safe) ---
+// --- Custom Hooks ---
 const useLocalStorage = (key: string, defaultValue: string[]) => {
   const [value, setValue] = useState<string[]>(defaultValue);
   const [isClient, setIsClient] = useState(false);
-=======
-// --- FIXED Custom Hook for LocalStorage (Hydration Safe) ---
-const useLocalStorage = (key: string, defaultValue: string[]) => {
-  // Start with default value (same on server and client)
-  const [value, setValue] = useState<string[]>(defaultValue);
-  const [isClient, setIsClient] = useState(false);
 
-  // Mark when we're on client side
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Load from localStorage only after component mounts (client-side only)
-  useEffect(() => {
-    if (!isClient) return;
-
-    try {
-      const item = localStorage.getItem(key);
-      if (item) {
-        setValue(JSON.parse(item));
-      }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
-    }
-  }, [key, isClient]);
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
-
-  // Save to localStorage whenever value changes
-  useEffect(() => {
-<<<<<<< HEAD
-    setIsClient(true);
-  }, []);
+  useEffect(() => setIsClient(true), []);
 
   useEffect(() => {
     if (!isClient) return;
     try {
       const item = localStorage.getItem(key);
       if (item) setValue(JSON.parse(item));
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
-    }
+    } catch (e) { console.error(e); }
   }, [key, isClient]);
 
   useEffect(() => {
     if (!isClient) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
-=======
-    if (!isClient) return;
-
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
+    localStorage.setItem(key, JSON.stringify(value));
   }, [key, value, isClient]);
 
   return [value, setValue] as const;
 };
 
-// --- Custom Hook for Drag Scroll ---
 const useDragScroll = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-<<<<<<< HEAD
-=======
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDragging(true);
-      setStartX(e.pageX - element.offsetLeft);
-      setScrollLeft(element.scrollLeft);
-      element.style.cursor = 'grabbing';
-    };
-
-    const handleMouseLeave = () => {
-      setIsDragging(false);
-      element.style.cursor = 'grab';
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      element.style.cursor = 'grab';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const x = e.pageX - element.offsetLeft;
-      const walk = (x - startX) * 2;
-      element.scrollLeft = scrollLeft - walk;
-    };
-
-    element.addEventListener('mousedown', handleMouseDown);
-    element.addEventListener('mouseleave', handleMouseLeave);
-    element.addEventListener('mouseup', handleMouseUp);
-    element.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      element.removeEventListener('mousedown', handleMouseDown);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-      element.removeEventListener('mouseup', handleMouseUp);
-      element.removeEventListener('mousemove', handleMouseMove);
-    };
+    const onDown = (e: MouseEvent) => { setIsDragging(true); setStartX(e.pageX - element.offsetLeft); setScrollLeft(element.scrollLeft); };
+    const onLeave = () => setIsDragging(false);
+    const onUp = () => setIsDragging(false);
+    const onMove = (e: MouseEvent) => { if(!isDragging) return; e.preventDefault(); const x = e.pageX - element.offsetLeft; const walk = (x - startX) * 2; element.scrollLeft = scrollLeft - walk; };
+    
+    element.addEventListener('mousedown', onDown);
+    element.addEventListener('mouseleave', onLeave);
+    element.addEventListener('mouseup', onUp);
+    element.addEventListener('mousemove', onMove);
+    return () => { element.removeEventListener('mousedown', onDown); element.removeEventListener('mouseleave', onLeave); element.removeEventListener('mouseup', onUp); element.removeEventListener('mousemove', onMove); };
   }, [isDragging, startX, scrollLeft]);
-
   return ref;
 };
 
-// --- Helper Components for Clean UI ---
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
+// --- Components ---
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDragging(true);
-      setStartX(e.pageX - element.offsetLeft);
-      setScrollLeft(element.scrollLeft);
-      element.style.cursor = 'grabbing';
-    };
-
-    const handleMouseLeave = () => {
-      setIsDragging(false);
-      element.style.cursor = 'grab';
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      element.style.cursor = 'grab';
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const x = e.pageX - element.offsetLeft;
-      const walk = (x - startX) * 2;
-      element.scrollLeft = scrollLeft - walk;
-    };
-
-    element.addEventListener('mousedown', handleMouseDown);
-    element.addEventListener('mouseleave', handleMouseLeave);
-    element.addEventListener('mouseup', handleMouseUp);
-    element.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      element.removeEventListener('mousedown', handleMouseDown);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-      element.removeEventListener('mouseup', handleMouseUp);
-      element.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isDragging, startX, scrollLeft]);
-
-  return ref;
-};
-
-// --- Helper Components ---
-
-// Actor Filmography Modal Component
+// 1. Actor Modal (New Feature)
 const ActorModal: React.FC<{
   actorData: ActorFilmography | null;
   isOpen: boolean;
   onClose: () => void;
   loading: boolean;
 }> = ({ actorData, isOpen, onClose, loading }) => {
-  const modalScrollRef = useDragScroll();
+  const pastScroll = useDragScroll();
+  const upcomingScroll = useDragScroll();
 
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-secondary-dark rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-secondary-dark rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl p-6 md:p-8" onClick={e => e.stopPropagation()}>
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent mx-auto"></div>
-            <p className="mt-4 text-gray-400">Loading filmography...</p>
-          </div>
+          <div className="text-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent mx-auto"></div><p className="mt-4 text-gray-400">Loading details...</p></div>
         ) : actorData ? (
-          <div className="p-8">
-            {/* Actor Header */}
-            <div className="flex gap-6 mb-6">
-              <img
-                src={
-                  actorData.actor.profile_path
-                    ? `https://image.tmdb.org/t/p/w300${actorData.actor.profile_path}`
-                    : 'https://placehold.co/300x450/1e293b/f8fafc?text=No+Image'
-                }
-                alt={actorData.actor.name}
-                draggable="false"
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-32 h-48 object-cover rounded-lg"
-              />
-              <div className="flex-1">
-                <h2 className="text-3xl font-bold text-accent mb-2">
-                  {actorData.actor.name}
-                </h2>
-                {actorData.actor.birthday && (
-                  <p className="text-sm text-gray-400 mb-1">
-                    🎂 Born: {new Date(actorData.actor.birthday).toLocaleDateString()}
-                  </p>
-                )}
-                {actorData.actor.place_of_birth && (
-                  <p className="text-sm text-gray-400 mb-3">
-                    📍 {actorData.actor.place_of_birth}
-                  </p>
-                )}
-                {actorData.actor.biography && (
-                  <p className="text-sm text-gray-300 line-clamp-4">
-                    {actorData.actor.biography}
-                  </p>
-                )}
+          <>
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-3xl font-bold text-white">{actorData.actor.name}</h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div className="flex flex-col md:flex-row gap-6 mb-8">
+              <img src={actorData.actor.profile_path ? `https://image.tmdb.org/t/p/w300${actorData.actor.profile_path}` : 'https://placehold.co/300x450?text=No+Image'} className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-full border-4 border-gray-700 shadow-lg" alt={actorData.actor.name} />
+              <div>
+                <div className="text-sm text-gray-400 mb-2">
+                  {actorData.actor.birthday && <span>🎂 {new Date(actorData.actor.birthday).getFullYear()} </span>}
+                  {actorData.actor.place_of_birth && <span>📍 {actorData.actor.place_of_birth}</span>}
+                </div>
+                <p className="text-sm text-gray-300 line-clamp-4">{actorData.actor.biography || "No biography available."}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                ✕
-              </button>
             </div>
 
-            {/* Filmography */}
-            <div>
-              <h3 className="text-2xl font-semibold mb-4">
-                Top Movies ({actorData.movies.length})
-              </h3>
-              <div 
-                ref={modalScrollRef}
-                className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
-              >
-                {actorData.movies.map((movie) => (
-                  <div key={movie.id} className="flex-shrink-0 w-40">
-                    <img
-                      src={
-                        movie.poster_path
-                          ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
-                          : 'https://placehold.co/200x300/1e293b/f8fafc?text=No+Poster'
-                      }
-                      alt={movie.title}
-                      draggable="false"
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-60 object-cover rounded-lg shadow-md"
-                    />
-                    <p className="mt-2 text-sm font-semibold line-clamp-2">
-                      {movie.title}
-                    </p>
-                    <p className="text-xs text-gray-400 line-clamp-1">
-                      as {movie.character}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-accent">
-                        ⭐ {movie.vote_average.toFixed(1)}
-                      </span>
-                      {movie.release_date && (
-                        <span className="text-xs text-gray-400">
-                          {new Date(movie.release_date).getFullYear()}
-                        </span>
-                      )}
+            {/* Past Movies */}
+            {actorData.pastMovies.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-accent mb-3">⭐ Top Rated Movies</h3>
+                <div ref={pastScroll} className="flex gap-4 overflow-x-auto pb-2 draggable-scroll no-scrollbar">
+                  {actorData.pastMovies.map((m) => (
+                    <div key={m.id} className="flex-shrink-0 w-32">
+                      <img src={m.poster_path ? `https://image.tmdb.org/t/p/w200${m.poster_path}` : 'https://placehold.co/200x300?text=No+Poster'} className="w-full h-48 object-cover rounded-lg mb-2" alt={m.title}/>
+                      <p className="text-xs text-white truncate">{m.title}</p>
+                      <p className="text-[10px] text-gray-400">{m.vote_average.toFixed(1)} ⭐</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-400">
-            Failed to load actor data
-          </div>
-        )}
+            )}
+
+            {/* Upcoming Movies */}
+            {actorData.upcomingMovies.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-blue-400 mb-3">🎬 Upcoming Projects</h3>
+                <div ref={upcomingScroll} className="flex gap-4 overflow-x-auto pb-2 draggable-scroll no-scrollbar">
+                  {actorData.upcomingMovies.map((m) => (
+                    <div key={m.id} className="flex-shrink-0 w-32 opacity-80 hover:opacity-100 transition">
+                      <img src={m.poster_path ? `https://image.tmdb.org/t/p/w200${m.poster_path}` : 'https://placehold.co/200x300/334155/ffffff?text=Coming+Soon'} className="w-full h-48 object-cover rounded-lg mb-2" alt={m.title}/>
+                      <p className="text-xs text-white truncate">{m.title}</p>
+                      <p className="text-[10px] text-blue-300">Coming: {m.release_date || 'TBA'}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : <p className="text-red-400">Data not available</p>}
       </div>
     </div>
   );
 };
 
-// Skeleton Loading Component
-const MovieSkeleton: React.FC = () => (
+// 2. Skeleton (Original Style)
+const MovieSkeleton = () => (
   <div className="bg-secondary-dark rounded-xl p-8 shadow-2xl animate-pulse">
     <div className="flex flex-col md:flex-row gap-8">
       <div className="w-full md:w-1/3 h-96 bg-gray-700 rounded-lg"></div>
       <div className="flex-1 space-y-4">
         <div className="h-10 bg-gray-700 rounded w-3/4"></div>
         <div className="h-6 bg-gray-700 rounded w-1/2"></div>
-        <div className="flex gap-3">
-          <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
-          <div className="h-8 w-32 bg-gray-700 rounded-full"></div>
-          <div className="h-8 w-24 bg-gray-700 rounded-full"></div>
-        </div>
-<<<<<<< HEAD
-=======
-        <div className="space-y-2">
-          <div className="h-6 bg-gray-700 rounded w-24"></div>
-          <div className="flex gap-2">
-            <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
-            <div className="h-8 w-24 bg-gray-700 rounded-full"></div>
-            <div className="h-8 w-20 bg-gray-700 rounded-full"></div>
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="h-6 bg-gray-700 rounded w-32"></div>
-          <div className="h-4 bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-        </div>
-      </div>
-    </div>
-    <div className="mt-8">
-      <div className="h-8 bg-gray-700 rounded w-32 mb-4"></div>
-      <div className="flex gap-4 overflow-x-hidden">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="flex-shrink-0 w-32">
-            <div className="w-full h-48 bg-gray-700 rounded-lg"></div>
-            <div className="mt-2 h-4 bg-gray-700 rounded"></div>
-            <div className="mt-1 h-3 bg-gray-700 rounded w-3/4"></div>
-          </div>
-        ))}
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
+        <div className="flex gap-3"><div className="h-8 w-20 bg-gray-700 rounded-full"></div><div className="h-8 w-32 bg-gray-700 rounded-full"></div></div>
+        <div className="space-y-2 mt-4"><div className="h-4 bg-gray-700 rounded w-full"></div><div className="h-4 bg-gray-700 rounded w-full"></div></div>
       </div>
     </div>
   </div>
 );
 
-// Cast Member Card with Click Handler
-const CastMemberCard: React.FC<{ 
-  member: CastMember;
-  onClick: (actorId: number) => void;
-}> = ({ member, onClick }) => {
-  const imageUrl = member.profile_path
-    ? `https://image.tmdb.org/t/p/w200${member.profile_path}`
-    : 'https://placehold.co/200x300/1e293b/f8fafc?text=No+Image';
-
-  return (
-    <div 
-      className="flex-shrink-0 w-32 text-center cursor-pointer group"
-      onClick={() => onClick(member.id)}
-    >
-      <img
-        src={imageUrl}
-        alt={member.name}
-        draggable="false"
-        onContextMenu={(e) => e.preventDefault()}
-        onDragStart={(e) => e.preventDefault()}
-<<<<<<< HEAD
-        className="w-full h-48 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
-=======
-        className="w-full h-48 object-cover rounded-lg shadow-md"
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
-      />
-      <p className="mt-2 text-sm font-semibold group-hover:text-accent transition-colors">
-        {member.name}
-      </p>
-      <p className="text-xs text-gray-400">as {member.character}</p>
-    </div>
-  );
-};
-
-// Review Card Component
-const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
-  <div className="bg-secondary-dark p-4 rounded-lg shadow-md mb-4">
-    <h4 className="font-bold text-accent mb-2">{review.author}</h4>
-    <p className="text-sm text-gray-300 line-clamp-3">{review.content}</p>
-    <a
-      href={review.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-accent text-xs mt-2 inline-block hover:underline"
-    >
-      Read Full Review →
-    </a>
-  </div>
-);
-
-// Recommended Movie Card
-const RecommendedMovieCard: React.FC<{ 
-  movie: RecommendedMovie; 
-  onMovieClick: (title: string) => void 
-}> = ({ movie, onMovieClick }) => {
-  const posterUrl = movie.poster_path
-    ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
-    : 'https://placehold.co/200x300/1e293b/f8fafc?text=No+Poster';
-
-  return (
-    <div 
-      className="flex-shrink-0 w-40 cursor-pointer group"
-      onClick={() => onMovieClick(movie.title)}
-    >
-      <img
-        src={posterUrl}
-        alt={movie.title}
-        draggable="false"
-        onContextMenu={(e) => e.preventDefault()}
-        onDragStart={(e) => e.preventDefault()}
-        className="w-full h-60 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform"
-      />
-      <p className="mt-2 text-sm font-semibold line-clamp-2 group-hover:text-accent">
-        {movie.title}
-      </p>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-xs text-accent">⭐ {movie.vote_average.toFixed(1)}</span>
-        <span className="text-xs text-gray-400">
-          {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-// Movie Details Component
+// 3. Main Movie Details
 const MovieDetails: React.FC<{ 
   movie: MovieData; 
   onRecommendedClick: (title: string) => void;
-  onActorClick: (actorId: number) => void;
+  onActorClick: (id: number) => void;
 }> = ({ movie, onRecommendedClick, onActorClick }) => {
-  const posterUrl = movie.poster_path
-    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : 'https://placehold.co/500x750/1e293b/f8fafc?text=No+Poster';
-
-  const topCast = useMemo(() => movie.credits.cast.slice(0, 6), [movie.credits.cast]);
-  const recommendations = useMemo(
-    () => movie.recommendations?.results?.slice(0, 10) || [], 
-    [movie.recommendations]
-  );
-
-  const castScrollRef = useDragScroll();
-  const recommendScrollRef = useDragScroll();
+  const topCast = movie.credits.cast.slice(0, 10);
+  const recommendations = movie.recommendations?.results?.slice(0, 10) || [];
+  const scrollRef = useDragScroll();
+  const recScrollRef = useDragScroll();
 
   return (
     <div className="bg-secondary-dark rounded-xl p-8 shadow-2xl">
       <div className="flex flex-col md:flex-row gap-8">
-        <img
-          src={posterUrl}
-          alt={movie.title}
-          draggable="false"
-          onContextMenu={(e) => e.preventDefault()}
-          onDragStart={(e) => e.preventDefault()}
-          className="w-full md:w-1/3 rounded-lg poster-shadow"
-        />
+        <img src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://placehold.co/500x750?text=No+Poster'} alt={movie.title} className="w-full md:w-1/3 rounded-lg poster-shadow" />
         <div className="flex-1">
           <h2 className="text-4xl font-bold text-accent mb-2">{movie.title}</h2>
-          <p className="text-lg italic text-gray-400 mb-4">
-            {movie.tagline || 'A great cinematic experience.'}
-          </p>
-          <div className="flex flex-wrap gap-3 mb-4">
-            <span className="bg-accent text-white px-3 py-1 rounded-full text-sm font-semibold">
-              ⭐ {movie.vote_average.toFixed(1)}
-            </span>
-            <span className="bg-gray-700 px-3 py-1 rounded-full text-sm">
-              📅 {movie.release_date}
-            </span>
-            <span className="bg-gray-700 px-3 py-1 rounded-full text-sm">
-              ⏱️ {movie.runtime} min
-            </span>
+          <p className="text-lg italic text-gray-400 mb-4">{movie.tagline}</p>
+          <div className="flex gap-3 mb-4">
+            <span className="bg-accent text-white px-3 py-1 rounded-full text-sm font-semibold">⭐ {movie.vote_average.toFixed(1)}</span>
+            <span className="bg-gray-700 px-3 py-1 rounded-full text-sm">📅 {movie.release_date?.split('-')[0]}</span>
+            <span className="bg-gray-700 px-3 py-1 rounded-full text-sm">⏱️ {movie.runtime} min</span>
           </div>
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">Genres</h3>
             <div className="flex flex-wrap gap-2">
-              {movie.genres.map((genre) => (
-                <span key={genre.id} className="bg-gray-700 px-3 py-1 rounded-full text-sm">
-                  {genre.name}
-                </span>
-              ))}
+              {movie.genres.map(g => <span key={g.id} className="bg-gray-700 px-3 py-1 rounded-full text-sm">{g.name}</span>)}
             </div>
           </div>
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Overview</h3>
-            <p className="text-gray-300 leading-relaxed">{movie.overview}</p>
-          </div>
+          <h3 className="text-xl font-semibold mb-2">Overview</h3>
+          <p className="text-gray-300 leading-relaxed">{movie.overview}</p>
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* Cast Section with Actor Click */}
+      {/* Cast (With Click Handler) */}
       {topCast.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4">
-            Top Cast <span className="text-sm text-gray-400">(Click to view filmography)</span>
-          </h3>
-=======
-      {topCast.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4">Top Cast</h3>
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
-          <div 
-            ref={castScrollRef}
-            className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
-          >
-            {topCast.map((member) => (
-              <CastMemberCard 
-                key={member.cast_id} 
-                member={member}
-                onClick={onActorClick}
-              />
+          <h3 className="text-2xl font-semibold mb-4">Top Cast <span className="text-sm text-gray-500 font-normal ml-2">(Click for details)</span></h3>
+          <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar">
+            {topCast.map(member => (
+              <div key={member.cast_id} className="flex-shrink-0 w-32 text-center cursor-pointer group" onClick={() => onActorClick(member.id)}>
+                <div className="relative overflow-hidden rounded-lg">
+                  <img src={member.profile_path ? `https://image.tmdb.org/t/p/w200${member.profile_path}` : 'https://placehold.co/200x300?text=No+Image'} 
+                       alt={member.name} className="w-full h-48 object-cover shadow-md group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                </div>
+                <p className="mt-2 text-sm font-semibold group-hover:text-accent transition-colors">{member.name}</p>
+                <p className="text-xs text-gray-400 truncate">{member.character}</p>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-<<<<<<< HEAD
-      {/* Recommendations Section */}
-=======
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
+      {/* Recommendations */}
       {recommendations.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4">Similar Movies You Might Like</h3>
-          <div 
-            ref={recommendScrollRef}
-            className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar"
-          >
-            {recommendations.map((recMovie) => (
-              <RecommendedMovieCard 
-                key={recMovie.id} 
-                movie={recMovie} 
-                onMovieClick={onRecommendedClick}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {movie.reviews.results.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-4">User Reviews</h3>
-          <div className="max-h-96 overflow-y-auto">
-            {movie.reviews.results.slice(0, 3).map((review, index) => (
-              <ReviewCard key={index} review={review} />
+          <h3 className="text-2xl font-semibold mb-4">Similar Movies</h3>
+          <div ref={recScrollRef} className="flex gap-4 overflow-x-auto pb-4 draggable-scroll no-scrollbar">
+            {recommendations.map(m => (
+              <div key={m.id} className="flex-shrink-0 w-40 cursor-pointer group" onClick={() => onRecommendedClick(m.title)}>
+                <img src={m.poster_path ? `https://image.tmdb.org/t/p/w200${m.poster_path}` : 'https://placehold.co/200x300?text=No+Poster'} 
+                     className="w-full h-60 object-cover rounded-lg shadow-md group-hover:scale-105 transition-transform" alt={m.title} />
+                <p className="mt-2 text-sm font-semibold line-clamp-2 group-hover:text-accent">{m.title}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -610,7 +261,7 @@ const MovieDetails: React.FC<{
   );
 };
 
-// --- Main Component ---
+// --- Main Page ---
 export default function Home() {
   const [title, setTitle] = useState('');
   const [movieData, setMovieData] = useState<MovieData | null>(null);
@@ -618,111 +269,52 @@ export default function Home() {
   const [error, setError] = useState('');
   const [searchHistory, setSearchHistory] = useLocalStorage('movieSearchHistory', []);
   
-  // Actor modal state
+  // Actor Modal State
   const [actorModalOpen, setActorModalOpen] = useState(false);
   const [actorData, setActorData] = useState<ActorFilmography | null>(null);
   const [actorLoading, setActorLoading] = useState(false);
 
-  // Disable right-click
-  useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    document.addEventListener('contextmenu', handleContextMenu);
-    return () => document.removeEventListener('contextmenu', handleContextMenu);
-  }, []);
-
-<<<<<<< HEAD
-=======
-  // Disable right-click on entire page
-  useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
-    
-    document.addEventListener('contextmenu', handleContextMenu);
-    
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-    };
-  }, []);
-
->>>>>>> fbcdd828404709feca9204bcc760bc4361465aa4
-  const addToHistory = useCallback((searchTerm: string) => {
-    setSearchHistory((prev) => {
-      const newHistory = [searchTerm, ...prev.filter(item => item !== searchTerm)];
-      return newHistory.slice(0, 5);
-    });
-  }, [setSearchHistory]);
-
-  const clearHistory = useCallback(() => {
-    setSearchHistory([]);
-  }, [setSearchHistory]);
-
   const searchMovie = useCallback(async (searchTerm?: string) => {
-    const movieTitle = searchTerm || title;
+    const query = searchTerm || title;
+    if (!query.trim()) return setError('Please enter a title.');
     
-    if (!movieTitle.trim()) {
-      setError('Please enter a movie title.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setMovieData(null);
-
+    setLoading(true); setError(''); setMovieData(null);
+    
     try {
-      const response = await fetch(`/api/search?title=${encodeURIComponent(movieTitle)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Failed to fetch movie data.');
-        return;
-      }
-
+      const res = await fetch(`/api/search?title=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
       setMovieData(data);
-      addToHistory(movieTitle);
+      setSearchHistory(prev => [query, ...prev.filter(x => x !== query)].slice(0, 5));
       if (!searchTerm) setTitle('');
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
-  }, [title, addToHistory]);
+  }, [title, setSearchHistory]);
 
-  const handleRecommendedClick = useCallback((movieTitle: string) => {
-    setTitle(movieTitle);
-    searchMovie(movieTitle);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchMovie]);
-
-  // NEW: Handle actor click
-  const handleActorClick = useCallback(async (actorId: number) => {
+  const handleActorClick = async (id: number) => {
     setActorModalOpen(true);
     setActorLoading(true);
     setActorData(null);
-
     try {
-      const response = await fetch(`/api/actor?id=${actorId}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setActorData(data);
-      } else {
-        console.error('Failed to fetch actor data');
-      }
-    } catch (error) {
-      console.error('Error fetching actor data:', error);
-    } finally {
-      setActorLoading(false);
-    }
-  }, []);
+      const res = await fetch(`/api/actor?id=${id}`);
+      const data = await res.json();
+      if (res.ok) setActorData(data);
+    } catch (e) { console.error(e); }
+    finally { setActorLoading(false); }
+  };
 
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto">
+        {/* Restored Original Header Style */}
         <h1 className="text-5xl font-extrabold text-center mb-8 text-accent">
           🎬 Movie Explorer
         </h1>
 
+        {/* Restored Original Input Style */}
         <div className="flex gap-4 mb-4">
           <input
             type="text"
@@ -741,43 +333,31 @@ export default function Home() {
           </button>
         </div>
 
+        {/* Recent Searches */}
         {searchHistory.length > 0 && !loading && !movieData && (
           <div className="bg-secondary-dark rounded-lg p-4 mb-8">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-semibold text-gray-400">Recent Searches</h3>
-              <button onClick={clearHistory} className="text-xs text-accent hover:underline">
-                Clear History
-              </button>
+              <button onClick={() => setSearchHistory([])} className="text-xs text-accent hover:underline">Clear History</button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {searchHistory.map((search, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setTitle(search);
-                    searchMovie(search);
-                  }}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-full text-sm transition"
-                >
-                  {search}
+              {searchHistory.map((s, i) => (
+                <button key={i} onClick={() => { setTitle(s); searchMovie(s); }} className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-full text-sm transition">
+                  {s}
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="bg-red-600 text-white p-4 rounded-lg mb-8">
-            Error: {error}
-          </div>
-        )}
-
+        {error && <div className="bg-red-600 text-white p-4 rounded-lg mb-8">{error}</div>}
+        
         {loading && <MovieSkeleton />}
-
+        
         {movieData && !loading && (
           <MovieDetails 
             movie={movieData} 
-            onRecommendedClick={handleRecommendedClick}
+            onRecommendedClick={(t) => { setTitle(t); searchMovie(t); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             onActorClick={handleActorClick}
           />
         )}
@@ -790,12 +370,11 @@ export default function Home() {
         )}
       </div>
 
-      {/* Actor Filmography Modal */}
-      <ActorModal
-        actorData={actorData}
-        isOpen={actorModalOpen}
-        onClose={() => setActorModalOpen(false)}
-        loading={actorLoading}
+      <ActorModal 
+        isOpen={actorModalOpen} 
+        onClose={() => setActorModalOpen(false)} 
+        actorData={actorData} 
+        loading={actorLoading} 
       />
     </div>
   );

@@ -3,34 +3,32 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  /* Browser ko dark mode batane ke liye */
+  font-family: 'Inter', system-ui, sans-serif;
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #050505; 
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: #050505;
 }
 
-/* FIX: Ensure body takes full screen width & height */
-body {
+/* --- SABSE IMPORTANT FIX --- */
+/* Hum '!important' use kar rahe hain taaki purani settings override ho jayein */
+
+html, body {
   margin: 0;
   padding: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden; /* Scrollbars disable karne ke liye */
+  overflow: hidden; /* Scrollbars hide karne ke liye */
   background-color: #050505;
+  
+  /* Ye line us "centering" problem ko khatam karegi */
+  display: block !important; 
+  place-items: unset !important;
 }
 
-/* FIX: #root element should fill the body */
 #root {
   width: 100%;
   height: 100%;
-  display: block; /* Ye important hai taaki content fail sake */
+  display: block !important; /* Flexbox hatao */
+  margin: 0;
+  padding: 0;
+  max-width: 100% !important;
 }

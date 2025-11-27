@@ -1,7 +1,7 @@
 // src/components/Dashboard.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Loader2, Play, FileVideo, X, LogOut, RefreshCw, Copy, CheckCircle, 
   LayoutGrid, List as ListIcon, Info, Globe, Github, Mail, Instagram, Twitter, Send
@@ -16,12 +16,14 @@ interface FileItem {
   size?: string;
 }
 
-export default function Dashboard({ accessToken }: { accessToken: string }) {
+// Dashboard ab ek optional 'initialFileId' prop accept karega
+export default function Dashboard({ accessToken, initialFileId }: { accessToken: string; initialFileId?: string | null }) {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentVideo, setCurrentVideo] = useState<FileItem | null>(null);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
 
   const formatSize = (bytes?: string) => {
     if (!bytes) return "Unknown Size";
@@ -33,7 +35,7 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
     return parseFloat((size / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
       const q = "mimeType contains 'video/' and trashed = false";
@@ -59,11 +61,40 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchFiles();
   }, [accessToken]);
+
+  // Effect to handle initial file loading from Drive "Open with"
+  useEffect(() => {
+    const loadInitialFile = async () => {
+      if (initialFileId && !isAutoPlaying) {
+        setIsAutoPlaying(true);
+        try {
+          // Fetch metadata for the single file opened from Drive
+          const fields = "id, name, mimeType, thumbnailLink, size";
+          const url = `https://www.googleapis.com/drive/v3/files/${initialFileId}?fields=${encodeURIComponent(fields)}`;
+          
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+
+          if (res.ok) {
+            const fileData: FileItem = await res.json();
+            setCurrentVideo(fileData);
+          } else {
+            console.error("Failed to fetch initial file metadata");
+          }
+        } catch (error) {
+          console.error("Error loading initial file:", error);
+        }
+      }
+    };
+
+    // Load the list first, then check for initial file
+    fetchFiles().then(() => {
+        loadInitialFile();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, initialFileId, fetchFiles]); // Added fetchFiles to dependency
 
   const isBrowserPlayable = (mimeType: string) => {
     return mimeType.includes("mp4") || mimeType.includes("webm");
@@ -78,7 +109,6 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
   };
 
   return (
-    // Added 'select-none' here to prevent text selection globally in the dashboard
     <div className="w-full min-h-full flex flex-col select-none">
       
       {/* Header */}
@@ -122,7 +152,7 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
 
       {/* Content Area */}
       <div className="flex-grow">
-        {loading ? (
+        {loading && !currentVideo ? (
             <div className="flex flex-col justify-center items-center h-64 gap-4"><Loader2 className="w-12 h-12 animate-spin text-purple-500" /><p className="text-gray-400 animate-pulse">Scanning your Drive...</p></div>
         ) : files.length === 0 ? (
             <div className="text-center text-gray-500 mt-20">No videos found.</div>
@@ -188,10 +218,10 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
         )}
       </div>
 
-      {/* Footer Section (Updated Order) */}
+      {/* Footer Section */}
       <div className="mt-20 pt-8 border-t border-white/5 flex flex-col items-center gap-6 pb-8">
         
-        {/* Social Links (Ab Upar hain) */}
+        {/* Social Links */}
         <div className="flex gap-4">
             <SocialLink href="https://instagram.com/priyansh__.86" icon={<Instagram size={18} />} color="hover:text-pink-500 hover:border-pink-500/50" />
             <SocialLink href="https://x.com/priyansh_86" icon={<Twitter size={18} />} color="hover:text-blue-400 hover:border-blue-400/50" />
@@ -201,7 +231,7 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
             <SocialLink href="mailto:priyanshrajbhar499@gmail.com" icon={<Mail size={18} />} color="hover:text-red-400 hover:border-red-400/50" />
         </div>
 
-        {/* Made By Text (Ab Neeche hai) */}
+        {/* Made By Text */}
         <div className="flex flex-col items-center gap-2">
             <h3 className="text-gray-400 text-sm font-medium tracking-wide">
                 Made with <span className="text-red-500 animate-pulse">❤</span> by <span className="text-white font-bold">PRIYANSH</span>
@@ -236,7 +266,6 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
                     <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
                         <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Copy Stream Link</p>
                         <div className="flex gap-2">
-                            {/* Input par select-text rakha taaki link copy ho sake */}
                             <input readOnly value={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/stream?fileId=${currentVideo.id}&token=${accessToken.substring(0, 10)}...`} className="bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-500 w-full outline-none select-text" />
                             <button onClick={copyStreamLink} className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-medium">{copied ? <CheckCircle size={18} /> : <Copy size={18} />}{copied ? "Copied" : "Copy"}</button>
                         </div>
@@ -255,7 +284,6 @@ export default function Dashboard({ accessToken }: { accessToken: string }) {
   );
 }
 
-// Social Link Component
 function SocialLink({ href, icon, color }: { href: string, icon: React.ReactNode, color: string }) {
     return (
         <a 

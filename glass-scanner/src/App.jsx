@@ -8,10 +8,11 @@ import {
   Scan, Image as ImageIcon, History, Zap, ZapOff, 
   Copy, ExternalLink, Wifi, RefreshCcw, X, Share2, Trash2,
   Github, Twitter, Instagram, Mail, Globe, Send, 
-  ChevronDown, Barcode, AlertCircle, Aperture
+  ChevronDown, Barcode, AlertCircle
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useLocalStorage } from 'react-use';
+import Logo1 from './components/Logo1'; // Importing your custom logo
 
 // --- Sound Utility ---
 const playBeep = () => {
@@ -147,16 +148,9 @@ export default function App() {
       <header className="flex justify-between items-center p-6 max-w-md mx-auto w-full">
         <div className="flex items-center gap-3">
             
-            {/* LOGO AREA */}
-            {/* INSTRUCTION: 
-                Apna 'logo.png' 'public' folder me daalo. 
-                Aur niche wali <img> line ko uncomment karo aur <div> ko hata do.
-            */}
-            
-            {/* <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" /> */}
-
-            <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-pink-500/20">
-             <Aperture className="text-white w-6 h-6 animate-spin-slow" />
+            {/* New Custom Logo */}
+            <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-2 rounded-xl shadow-lg shadow-pink-500/20">
+               <Logo1 className="text-white w-7 h-7" />
             </div>
 
             <div>

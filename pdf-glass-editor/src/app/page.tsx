@@ -10,7 +10,7 @@ import {
 import { 
   FileText, Layers, Scissors, RotateCw, Image as ImageIcon, 
   ShieldCheck, Zap, UploadCloud, X, Download, Loader2, Plus, 
-  Trash2, ArrowUp, ArrowDown, Info, Lock, Stamp, Hash
+  Trash2, Info, Lock, Stamp, Hash
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
@@ -24,8 +24,8 @@ const tools = [
   { id: "split", name: "Split PDF", icon: Scissors, desc: "Extract pages." },
   { id: "compress", name: "Compress", icon: Zap, desc: "Reduce file size." },
   { id: "convert", name: "Img to PDF", icon: ImageIcon, desc: "JPG/PNG to PDF." },
-  { id: "watermark", name: "Watermark", icon: Stamp, desc: "Add overlay text." }, // 👈 NEW
-  { id: "numbers", name: "Page Numbers", icon: Hash, desc: "Add 1 of X numbering." }, // 👈 NEW
+  { id: "watermark", name: "Watermark", icon: Stamp, desc: "Add overlay text." },
+  { id: "numbers", name: "Page Numbers", icon: Hash, desc: "Add 1 of X numbering." },
   { id: "rotate", name: "Rotate", icon: RotateCw, desc: "Rotate pages 90°." },
   { id: "protect", name: "Protect", icon: ShieldCheck, desc: "Add password." },
 ];
@@ -38,7 +38,7 @@ export default function Home() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [splitRange, setSplitRange] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [watermarkText, setWatermarkText] = useState<string>(""); // 👈 NEW
+  const [watermarkText, setWatermarkText] = useState<string>(""); 
   
   const [activeTool, setActiveTool] = useState<string>(""); 
   const [rotation, setRotation] = useState(0);
@@ -61,7 +61,7 @@ export default function Home() {
         setMergeFiles([droppedFile]);
         setSplitRange("");
         setPassword("");
-        setWatermarkText(""); // Reset
+        setWatermarkText("");
         setActiveTool("");
       }
     }
@@ -111,12 +111,10 @@ export default function Home() {
         alert("Pages Extracted! ✂️");
       }
       else if (activeTool === "watermark" && watermarkText && file) {
-        // 👈 WATERMARK
         await addWatermark(file, watermarkText);
         alert("Watermark Added! 💧");
       }
       else if (activeTool === "numbers" && file) {
-        // 👈 PAGE NUMBERS
         await addPageNumbers(file);
         alert("Page Numbers Added! 🔢");
       }
@@ -237,7 +235,6 @@ export default function Home() {
                
                {isImageMode ? (
                  <div className="flex flex-col gap-2">
-                   {/* Image Tools UI (Same as before) */}
                    <button className="flex items-center gap-3 p-3 rounded-lg bg-white/20 text-white text-sm text-left"><ImageIcon className="w-4 h-4" /> Selected Images</button>
                    <div className="ml-2 pl-2 border-l-2 border-white/10 mt-2 mb-2 flex flex-col gap-2">
                       <button onClick={() => imageInputRef.current?.click()} className="text-xs flex items-center justify-center gap-2 text-purple-300 bg-purple-500/10 px-3 py-3 rounded-md border border-purple-500/20 w-full hover:bg-purple-500/20 transition-all"><Plus className="w-3 h-3" /> Add More Images</button>
@@ -273,7 +270,7 @@ export default function Home() {
                        </div>
                      )}
 
-                     {/* WATERMARK UI (NEW) */}
+                     {/* WATERMARK UI */}
                      {activeTool === "watermark" && tool.id === "watermark" && (
                        <div className="ml-2 pl-2 border-l-2 border-white/10 mt-2 mb-2 animate-in slide-in-from-left-2 flex flex-col gap-2">
                          <div className="bg-white/5 p-3 rounded-lg border border-white/10">
@@ -283,7 +280,7 @@ export default function Home() {
                        </div>
                      )}
 
-                     {/* NUMBERS UI (NEW) */}
+                     {/* NUMBERS UI */}
                      {activeTool === "numbers" && tool.id === "numbers" && (
                        <div className="ml-2 pl-2 border-l-2 border-white/10 mt-2 mb-2 animate-in slide-in-from-left-2 flex flex-col gap-2">
                          <div className="bg-white/5 p-3 rounded-lg border border-white/10">
@@ -329,7 +326,8 @@ export default function Home() {
                        <p className="text-black/50 text-xs">Preview of first image</p>
                     </div>
                   ) : (
-                    <PDFViewer file={file} rotation={rotation} />
+                    // FIX: Check if file exists before rendering viewer
+                    file && <PDFViewer file={file} rotation={rotation} />
                   )}
                </div>
             </div>

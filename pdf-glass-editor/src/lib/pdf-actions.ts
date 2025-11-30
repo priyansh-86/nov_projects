@@ -1,4 +1,4 @@
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument, degrees, rgb, StandardFonts } from "pdf-lib";
 import download from "downloadjs";
 
 const readFileAsync = (file: File): Promise<ArrayBuffer> => {
@@ -89,14 +89,14 @@ export const splitPDF = async (file: File, range: string) => {
   }
 };
 
-// 4. PROTECT (Try-Catch Wrapper for safety)
+// 4. PROTECT
 export const protectPDF = async (file: File, password: string) => {
   try {
     const fileBuffer = await readFileAsync(file);
     const pdfDoc = await PDFDocument.load(fileBuffer);
     // @ts-ignore
     if (typeof pdfDoc.encrypt !== 'function') {
-      alert("Update pending: Please restart your PC or update pdf-lib to v1.17.1 to use this feature.");
+      alert("Please update pdf-lib to v1.17.1+");
       return false;
     }
     // @ts-ignore
@@ -124,28 +124,95 @@ export const compressPDF = async (file: File) => {
   }
 };
 
-// ==============================
-// 6. IMAGE TO PDF (NEW FINAL FEATURE) 🖼️ -> 📄
-// ==============================
+// 6. IMAGE TO PDF
 export const imagesToPDF = async (files: File[]) => {
   try {
     const pdfDoc = await PDFDocument.create();
-
     for (const file of files) {
       const fileBuffer = await readFileAsync(file);
       const img = file.type === "image/png" 
         ? await pdfDoc.embedPng(fileBuffer) 
         : await pdfDoc.embedJpg(fileBuffer);
-      
       const page = pdfDoc.addPage([img.width, img.height]);
       page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
     }
-
     const pdfBytes = await pdfDoc.save();
     download(pdfBytes, "images-converted.pdf", "application/pdf");
     return true;
   } catch (error) {
     console.error("Error converting images:", error);
+    return false;
+  }
+};
+
+// ==============================
+// 7. WATERMARK (NEW) 💧
+// ==============================
+export const addWatermark = async (file: File, text: string) => {
+  try {
+    const fileBuffer = await readFileAsync(file);
+    const pdfDoc = await PDFDocument.load(fileBuffer);
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const pages = pdfDoc.getPages();
+
+    pages.forEach((page) => {
+      const { width, height } = page.getSize();
+      const fontSize = 50;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      const textHeight = font.heightAtSize(fontSize);
+
+      // Draw text diagonally in center
+      page.drawText(text, {
+        x: width / 2 - textWidth / 2,
+        y: height / 2 - textHeight / 2,
+        size: fontSize,
+        font: font,
+        color: rgb(0.75, 0.75, 0.75), // Light Gray
+        opacity: 0.5,
+        rotate: degrees(45),
+      });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    download(pdfBytes, `watermarked-${file.name}`, "application/pdf");
+    return true;
+  } catch (error) {
+    console.error("Error adding watermark:", error);
+    return false;
+  }
+};
+
+// ==============================
+// 8. PAGE NUMBERS (NEW) 🔢
+// ==============================
+export const addPageNumbers = async (file: File) => {
+  try {
+    const fileBuffer = await readFileAsync(file);
+    const pdfDoc = await PDFDocument.load(fileBuffer);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const pages = pdfDoc.getPages();
+    const totalPages = pages.length;
+
+    pages.forEach((page, idx) => {
+      const { width } = page.getSize();
+      const text = `${idx + 1} of ${totalPages}`;
+      const fontSize = 12;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+
+      page.drawText(text, {
+        x: width / 2 - textWidth / 2, // Center Bottom
+        y: 20,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    download(pdfBytes, `numbered-${file.name}`, "application/pdf");
+    return true;
+  } catch (error) {
+    console.error("Error adding page numbers:", error);
     return false;
   }
 };

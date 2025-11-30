@@ -81,34 +81,30 @@ function App() {
     };
   };
 
-  // Optimized Background Removal
-  const handleRemoveBackground = async () => {
+  // UPDATED: Now accepts modelType ('small', 'medium', 'large')
+  const handleRemoveBackground = async (modelType = 'medium') => {
     if (!originalImage || isRemovingBg) return;
     
     setIsRemovingBg(true);
-    setBgRemovalProgress(10);
+    setBgRemovalProgress(5);
     
     try {
-      console.log('🚀 Starting background removal...');
-      setBgRemovalProgress(20);
+      console.log(`🚀 Starting background removal with model: ${modelType}`);
+      setBgRemovalProgress(15);
       
-      // Dynamic import
       const { removeBackground } = await import('@imgly/background-removal');
-      setBgRemovalProgress(40);
-      console.log('✅ Library loaded');
+      setBgRemovalProgress(30);
       
       const imageBlob = await fetch(originalImage).then(r => r.blob());
-      setBgRemovalProgress(50);
-      console.log('✅ Image blob created');
+      setBgRemovalProgress(40);
       
-      // OPTIMIZED CONFIG - Fast mode
+      // Dynamic Config based on user selection
       const removedBgBlob = await removeBackground(imageBlob, {
         progress: (key, current, total) => {
-          const progressPercent = 50 + Math.round((current / total) * 40);
+          const progressPercent = 40 + Math.round((current / total) * 50);
           setBgRemovalProgress(progressPercent);
-          console.log(`🔄 ${key}: ${current}/${total}`);
         },
-        model: 'medium', // 'small' for faster, 'medium' for balance, 'large' for quality
+        model: modelType, // User selected model
         output: {
           format: 'image/png',
           quality: 0.8,
@@ -120,7 +116,6 @@ function App() {
       setImage(newImageUrl);
       
       setBgRemovalProgress(100);
-      console.log('✅ Background removed successfully!');
       
       setTimeout(() => {
         setIsRemovingBg(false);
@@ -129,7 +124,7 @@ function App() {
       
     } catch (error) {
       console.error('❌ Background removal failed:', error);
-      alert(`Background removal failed: ${error.message}\n\nTry with a smaller image or refresh the page.`);
+      alert(`Error: ${error.message}`);
       setIsRemovingBg(false);
       setBgRemovalProgress(0);
     }
@@ -179,7 +174,6 @@ function App() {
 
       <AnimatePresence>{showContact && <ContactModal onClose={() => setShowContact(false)} />}</AnimatePresence>
 
-      {/* Enhanced Loading Overlay */}
       <AnimatePresence>
         {isRemovingBg && (
           <motion.div 
@@ -189,44 +183,17 @@ function App() {
             className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center"
           >
             <div className="text-center max-w-md px-6">
-              {/* Circular Progress */}
               <div className="relative w-24 h-24 mx-auto mb-6">
                 <svg className="w-24 h-24 transform -rotate-90">
-                  <circle 
-                    cx="48" 
-                    cy="48" 
-                    r="42" 
-                    stroke="rgba(255,255,255,0.1)" 
-                    strokeWidth="8" 
-                    fill="none"
-                  />
-                  <circle 
-                    cx="48" 
-                    cy="48" 
-                    r="42" 
-                    stroke="white" 
-                    strokeWidth="8" 
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 42}`}
-                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - bgRemovalProgress / 100)}`}
-                    className="transition-all duration-300"
-                  />
+                  <circle cx="48" cy="48" r="42" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="none"/>
+                  <circle cx="48" cy="48" r="42" stroke="white" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 42}`} strokeDashoffset={`${2 * Math.PI * 42 * (1 - bgRemovalProgress / 100)}`} className="transition-all duration-300"/>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-2xl font-bold">{bgRemovalProgress}%</span>
                 </div>
               </div>
-
-              <p className="text-white text-lg font-medium mb-2">
-                {bgRemovalProgress < 40 ? 'Loading AI Model...' : 
-                 bgRemovalProgress < 50 ? 'Processing Image...' : 
-                 bgRemovalProgress < 90 ? 'Removing Background...' : 
-                 'Almost Done!'}
-              </p>
-              <p className="text-white/50 text-sm">
-                {bgRemovalProgress < 40 ? 'First time may take longer' : 'Please wait...'}
-              </p>
+              <p className="text-white text-lg font-medium mb-2">Processing with AI...</p>
+              <p className="text-white/50 text-sm">Downloading model & removing background...</p>
             </div>
           </motion.div>
         )}

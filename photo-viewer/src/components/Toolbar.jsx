@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   ZoomIn, ZoomOut, RotateCw, RefreshCcw, 
   Sun, Download, Sliders, Crop, Aperture, MoveHorizontal, 
-  MoveVertical, Droplet, Contrast, Palette, Eye, Eraser, Undo2
+  MoveVertical, Droplet, Contrast, Palette, Eye, Eraser, Undo2, Zap, Layers, Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,6 +12,8 @@ const Toolbar = ({
   onRemoveBackground, onRestoreOriginal, isRemovingBg, hasOriginal
 }) => {
   const [activeTab, setActiveTab] = useState('adjust'); 
+  const [bgModel, setBgModel] = useState('medium'); // Default model choice
+
   const updateEdit = (key, value) => setEdits(prev => ({ ...prev, [key]: value }));
   const toggleFlip = (axis) => setEdits(prev => ({ ...prev, [axis]: !prev[axis] }));
 
@@ -118,8 +120,33 @@ const Toolbar = ({
               exit={{ opacity: 0 }} 
               className="flex flex-col items-center gap-3 w-full"
             >
+              {/* Model Selector Buttons */}
+              <div className="w-full flex justify-between gap-2 p-1 bg-white/5 rounded-xl">
+                 <ModelBtn 
+                   label="Small" 
+                   sub="Fast" 
+                   icon={<Zap size={12}/>} 
+                   active={bgModel === 'small'} 
+                   onClick={() => setBgModel('small')} 
+                 />
+                 <ModelBtn 
+                   label="Medium" 
+                   sub="Balance" 
+                   icon={<Layers size={12}/>} 
+                   active={bgModel === 'medium'} 
+                   onClick={() => setBgModel('medium')} 
+                 />
+                 <ModelBtn 
+                   label="Large" 
+                   sub="Quality" 
+                   icon={<Star size={12}/>} 
+                   active={bgModel === 'large'} 
+                   onClick={() => setBgModel('large')} 
+                 />
+              </div>
+
               <button
-                onClick={onRemoveBackground}
+                onClick={() => onRemoveBackground(bgModel)}
                 disabled={isRemovingBg}
                 className="
                   w-full flex items-center justify-center gap-2 
@@ -134,7 +161,7 @@ const Toolbar = ({
                 "
               >
                 <Eraser size={18} />
-                <span>{isRemovingBg ? 'Removing...' : 'Remove Background'}</span>
+                <span>{isRemovingBg ? 'Processing...' : 'Remove Background'}</span>
               </button>
 
               {hasOriginal && (
@@ -155,10 +182,6 @@ const Toolbar = ({
                   <span>Restore Original</span>
                 </button>
               )}
-
-              <p className="text-[10px] text-white/40 text-center mt-1">
-                AI-powered background removal
-              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -206,6 +229,24 @@ const TabButton = ({ active, onClick, icon, label }) => (
     `}
   >
     {icon} <span className="hidden xs:inline">{label}</span>
+  </button>
+);
+
+const ModelBtn = ({ label, sub, icon, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`
+      flex flex-col items-center justify-center
+      flex-1 py-2 rounded-lg gap-0.5
+      transition-all duration-200
+      ${active ? 'bg-white text-black shadow-md scale-[1.02]' : 'text-white/50 hover:bg-white/5 hover:text-white/80'}
+    `}
+  >
+    <div className="flex items-center gap-1 mb-0.5">
+      {icon}
+      <span className="text-xs font-bold">{label}</span>
+    </div>
+    <span className="text-[9px] opacity-70 uppercase tracking-wider">{sub}</span>
   </button>
 );
 

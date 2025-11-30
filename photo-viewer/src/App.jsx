@@ -9,10 +9,12 @@ import ContactModal from './components/ContactModal';
 
 function App() {
   const [image, setImage] = useState(null);
+  const [originalImage, setOriginalImage] = useState(null); // Original store karne ke liye
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false); // Loading state
 
   const defaultEdits = { brightness: 100, contrast: 100, saturation: 100, blur: 0, rotation: 0, flipH: false, flipV: false };
   const [edits, setEdits] = useState(defaultEdits);
@@ -44,11 +46,12 @@ function App() {
     };
     img.src = objectUrl;
     setImage(objectUrl);
+    setOriginalImage(objectUrl); // Original save kar liya
     resetTools();
   };
 
   const resetTools = () => { setScale(1); setEdits(defaultEdits); setIsComparing(false); };
-  const handleClose = () => { setImage(null); resetTools(); };
+  const handleClose = () => { setImage(null); setOriginalImage(null); resetTools(); };
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); setIsFullscreen(true); } 
     else { document.exitFullscreen(); setIsFullscreen(false); }
@@ -75,6 +78,37 @@ function App() {
       link.href = canvas.toDataURL('image/png');
       link.click();
     };
+  };
+
+  // Background Remove function
+  const handleRemoveBackground = async () => {
+    if (!originalImage || isRemovingBg) return;
+    
+    setIsRemovingBg(true);
+    
+    try {
+      // Dynamic import to reduce initial bundle size
+      const { removeBackground } = await import('@imgly/background-removal');
+      
+      const imageBlob = await fetch(originalImage).then(r => r.blob());
+      const removedBgBlob = await removeBackground(imageBlob);
+      const newImageUrl = URL.createObjectURL(removedBgBlob);
+      
+      setImage(newImageUrl);
+      setIsRemovingBg(false);
+    } catch (error) {
+      console.error('Background removal failed:', error);
+      alert('Background removal failed. Please try again.');
+      setIsRemovingBg(false);
+    }
+  };
+
+  // Restore original image
+  const handleRestoreOriginal = () => {
+    if (originalImage) {
+      setImage(originalImage);
+      resetTools();
+    }
   };
 
   return (
@@ -114,6 +148,24 @@ function App() {
 
       <AnimatePresence>{showContact && <ContactModal onClose={() => setShowContact(false)} />}</AnimatePresence>
 
+      {/* Loading Overlay for BG Removal */}
+      <AnimatePresence>
+        {isRemovingBg && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center"
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-white text-lg font-medium">Removing Background...</p>
+              <p className="text-white/50 text-sm mt-2">This may take a few seconds</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="w-full h-full flex items-center justify-center z-10 relative">
         <AnimatePresence mode="wait">
           {!image ? (
@@ -123,7 +175,21 @@ function App() {
           ) : (
             <motion.div key="viewer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
               <ImageViewer image={image} scale={scale} edits={edits} isComparing={isComparing} />
-              <Toolbar edits={edits} setEdits={setEdits} scale={scale} setScale={setScale} onReset={resetTools} isFullscreen={isFullscreen} toggleFullscreen={toggleFullscreen} onDownload={handleDownload} setIsComparing={setIsComparing} />
+              <Toolbar 
+                edits={edits} 
+                setEdits={setEdits} 
+                scale={scale} 
+                setScale={setScale} 
+                onReset={resetTools} 
+                isFullscreen={isFullscreen} 
+                toggleFullscreen={toggleFullscreen} 
+                onDownload={handleDownload} 
+                setIsComparing={setIsComparing}
+                onRemoveBackground={handleRemoveBackground}
+                onRestoreOriginal={handleRestoreOriginal}
+                isRemovingBg={isRemovingBg}
+                hasOriginal={image !== originalImage}
+              />
             </motion.div>
           )}
         </AnimatePresence>

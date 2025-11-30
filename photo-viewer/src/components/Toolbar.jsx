@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { 
-  ZoomIn, ZoomOut, RotateCw, Maximize, Minimize, RefreshCcw, 
+  ZoomIn, ZoomOut, RotateCw, RefreshCcw, 
   Sun, Download, Sliders, Crop, Aperture, MoveHorizontal, 
-  MoveVertical, Droplet, Contrast, Palette, Eye 
+  MoveVertical, Droplet, Contrast, Palette, Eye, Eraser, Undo2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Toolbar = ({ 
   edits, setEdits, onReset, scale, setScale, 
-  isFullscreen, toggleFullscreen, onDownload, setIsComparing 
+  isFullscreen, toggleFullscreen, onDownload, setIsComparing,
+  onRemoveBackground, onRestoreOriginal, isRemovingBg, hasOriginal
 }) => {
   const [activeTab, setActiveTab] = useState('adjust'); 
   const updateEdit = (key, value) => setEdits(prev => ({ ...prev, [key]: value }));
@@ -37,11 +38,12 @@ const Toolbar = ({
         p-1 gap-1 
         shadow-lg 
         pointer-events-auto
-        max-w-[320px] w-full
+        max-w-[380px] w-full
       ">
         <TabButton active={activeTab === 'adjust'} onClick={() => setActiveTab('adjust')} icon={<Sliders size={14} />} label="Adjust" />
         <TabButton active={activeTab === 'transform'} onClick={() => setActiveTab('transform')} icon={<Crop size={14} />} label="Transform" />
         <TabButton active={activeTab === 'filters'} onClick={() => setActiveTab('filters')} icon={<Aperture size={14} />} label="Filters" />
+        <TabButton active={activeTab === 'effects'} onClick={() => setActiveTab('effects')} icon={<Eraser size={14} />} label="Effects" />
       </div>
 
       {/* Main Controls Container */}
@@ -107,6 +109,58 @@ const Toolbar = ({
               <FilterBtn name="Vintage" onClick={() => setEdits({...edits, saturation: 60, contrast: 130, brightness: 90})} />
             </motion.div>
           )}
+
+          {activeTab === 'effects' && (
+            <motion.div 
+              key="effects" 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="flex flex-col items-center gap-3 w-full"
+            >
+              <button
+                onClick={onRemoveBackground}
+                disabled={isRemovingBg}
+                className="
+                  w-full flex items-center justify-center gap-2 
+                  px-4 py-3 
+                  bg-gradient-to-r from-purple-500/20 to-pink-500/20
+                  hover:from-purple-500/30 hover:to-pink-500/30
+                  border border-purple-500/30
+                  rounded-xl 
+                  text-sm font-medium 
+                  transition-all
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                "
+              >
+                <Eraser size={18} />
+                <span>{isRemovingBg ? 'Removing...' : 'Remove Background'}</span>
+              </button>
+
+              {hasOriginal && (
+                <button
+                  onClick={onRestoreOriginal}
+                  className="
+                    w-full flex items-center justify-center gap-2 
+                    px-4 py-3 
+                    bg-white/5
+                    hover:bg-white/10
+                    border border-white/10
+                    rounded-xl 
+                    text-sm font-medium 
+                    transition-all
+                  "
+                >
+                  <Undo2 size={18} />
+                  <span>Restore Original</span>
+                </button>
+              )}
+
+              <p className="text-[10px] text-white/40 text-center mt-1">
+                AI-powered background removal
+              </p>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         <div className="w-full h-px bg-white/10 my-1"></div>
@@ -143,7 +197,7 @@ const TabButton = ({ active, onClick, icon, label }) => (
     onClick={onClick} 
     className={`
       flex items-center gap-1.5 
-      px-3 py-1.5 
+      px-2.5 py-1.5 
       rounded-full 
       text-[10px] font-medium 
       transition-all 

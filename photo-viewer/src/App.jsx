@@ -16,6 +16,9 @@ function App() {
   const [showContact, setShowContact] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [bgRemovalProgress, setBgRemovalProgress] = useState(0);
+  
+  // Time track karne ke liye state
+  const [processingTime, setProcessingTime] = useState(null);
 
   const defaultEdits = { brightness: 100, contrast: 100, saturation: 100, blur: 0, rotation: 0, flipH: false, flipV: false };
   const [edits, setEdits] = useState(defaultEdits);
@@ -51,8 +54,15 @@ function App() {
     resetTools();
   };
 
-  const resetTools = () => { setScale(1); setEdits(defaultEdits); setIsComparing(false); };
+  const resetTools = () => { 
+    setScale(1); 
+    setEdits(defaultEdits); 
+    setIsComparing(false); 
+    setProcessingTime(null);
+  };
+
   const handleClose = () => { setImage(null); setOriginalImage(null); resetTools(); };
+  
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); setIsFullscreen(true); } 
     else { document.exitFullscreen(); setIsFullscreen(false); }
@@ -81,12 +91,14 @@ function App() {
     };
   };
 
-  // UPDATED: Now accepts modelType ('small', 'medium', 'large')
   const handleRemoveBackground = async (modelType = 'medium') => {
     if (!originalImage || isRemovingBg) return;
     
     setIsRemovingBg(true);
     setBgRemovalProgress(5);
+    setProcessingTime(null);
+
+    const startTime = performance.now();
     
     try {
       console.log(`🚀 Starting background removal with model: ${modelType}`);
@@ -98,13 +110,12 @@ function App() {
       const imageBlob = await fetch(originalImage).then(r => r.blob());
       setBgRemovalProgress(40);
       
-      // Dynamic Config based on user selection
       const removedBgBlob = await removeBackground(imageBlob, {
         progress: (key, current, total) => {
           const progressPercent = 40 + Math.round((current / total) * 50);
           setBgRemovalProgress(progressPercent);
         },
-        model: modelType, // User selected model
+        model: modelType, 
         output: {
           format: 'image/png',
           quality: 0.8,
@@ -116,6 +127,10 @@ function App() {
       setImage(newImageUrl);
       
       setBgRemovalProgress(100);
+
+      const endTime = performance.now();
+      const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+      setProcessingTime(`${timeTaken}s`);
       
       setTimeout(() => {
         setIsRemovingBg(false);
@@ -138,7 +153,9 @@ function App() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-[#050505] text-white overflow-hidden font-sans selection:bg-blue-500/30">
+    // CHANGE: Added 'select-none' to the main container
+    <div className="relative w-full h-screen bg-[#050505] text-white overflow-hidden font-sans selection:bg-blue-500/30 select-none">
+      
       <AnimatePresence>
         {image && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="absolute inset-0 z-0 pointer-events-none">
@@ -152,12 +169,25 @@ function App() {
         <div className="flex items-center gap-3 pointer-events-auto">
           <div className="w-2.5 h-2.5 bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)]"></div>
           <span className="font-bold tracking-tight text-sm md:text-lg uppercase text-white/90 drop-shadow-lg">PRIYANSH <span className="hidden sm:inline">| Image View</span></span>
+          
           {image && (
             <div className="hidden md:flex items-center gap-2 ml-4 px-3 py-1 bg-black/20 backdrop-blur-md border border-white/5 rounded-full text-xs text-white/70 shadow-lg">
-               <span>{meta.dimensions}</span><span className="w-1 h-1 bg-white/20 rounded-full"></span><span>{meta.size}</span>
+               <span>{meta.dimensions}</span>
+               <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+               <span>{meta.size}</span>
+
+               {processingTime && (
+                 <>
+                   <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+                   <span className="text-green-400 font-mono font-semibold flex items-center gap-1">
+                     ⚡ {processingTime}
+                   </span>
+                 </>
+               )}
             </div>
           )}
         </div>
+
         <div className="pointer-events-auto flex items-center gap-2 md:gap-3">
            <button onClick={() => setShowContact(true)} className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-black/20 hover:bg-white/10 border border-white/5 rounded-full text-xs md:text-sm font-medium transition-all backdrop-blur-md shadow-lg group">
              <UserCircle2 size={16} className="text-white/80 group-hover:text-white" /><span className="hidden sm:inline text-white/90 group-hover:text-white">Connect</span>

@@ -9,12 +9,13 @@ import ContactModal from './components/ContactModal';
 
 function App() {
   const [image, setImage] = useState(null);
-  const [originalImage, setOriginalImage] = useState(null); // Original store karne ke liye
+  const [originalImage, setOriginalImage] = useState(null);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [showContact, setShowContact] = useState(false);
-  const [isRemovingBg, setIsRemovingBg] = useState(false); // Loading state
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [bgRemovalProgress, setBgRemovalProgress] = useState(0);
 
   const defaultEdits = { brightness: 100, contrast: 100, saturation: 100, blur: 0, rotation: 0, flipH: false, flipV: false };
   const [edits, setEdits] = useState(defaultEdits);
@@ -46,7 +47,7 @@ function App() {
     };
     img.src = objectUrl;
     setImage(objectUrl);
-    setOriginalImage(objectUrl); // Original save kar liya
+    setOriginalImage(objectUrl);
     resetTools();
   };
 
@@ -80,30 +81,60 @@ function App() {
     };
   };
 
-  // Background Remove function
+  // Optimized Background Removal
   const handleRemoveBackground = async () => {
     if (!originalImage || isRemovingBg) return;
     
     setIsRemovingBg(true);
+    setBgRemovalProgress(10);
     
     try {
-      // Dynamic import to reduce initial bundle size
+      console.log('🚀 Starting background removal...');
+      setBgRemovalProgress(20);
+      
+      // Dynamic import
       const { removeBackground } = await import('@imgly/background-removal');
+      setBgRemovalProgress(40);
+      console.log('✅ Library loaded');
       
       const imageBlob = await fetch(originalImage).then(r => r.blob());
-      const removedBgBlob = await removeBackground(imageBlob);
-      const newImageUrl = URL.createObjectURL(removedBgBlob);
+      setBgRemovalProgress(50);
+      console.log('✅ Image blob created');
       
+      // OPTIMIZED CONFIG - Fast mode
+      const removedBgBlob = await removeBackground(imageBlob, {
+        progress: (key, current, total) => {
+          const progressPercent = 50 + Math.round((current / total) * 40);
+          setBgRemovalProgress(progressPercent);
+          console.log(`🔄 ${key}: ${current}/${total}`);
+        },
+        model: 'medium', // 'small' for faster, 'medium' for balance, 'large' for quality
+        output: {
+          format: 'image/png',
+          quality: 0.8,
+        }
+      });
+      
+      setBgRemovalProgress(95);
+      const newImageUrl = URL.createObjectURL(removedBgBlob);
       setImage(newImageUrl);
-      setIsRemovingBg(false);
+      
+      setBgRemovalProgress(100);
+      console.log('✅ Background removed successfully!');
+      
+      setTimeout(() => {
+        setIsRemovingBg(false);
+        setBgRemovalProgress(0);
+      }, 500);
+      
     } catch (error) {
-      console.error('Background removal failed:', error);
-      alert('Background removal failed. Please try again.');
+      console.error('❌ Background removal failed:', error);
+      alert(`Background removal failed: ${error.message}\n\nTry with a smaller image or refresh the page.`);
       setIsRemovingBg(false);
+      setBgRemovalProgress(0);
     }
   };
 
-  // Restore original image
   const handleRestoreOriginal = () => {
     if (originalImage) {
       setImage(originalImage);
@@ -148,7 +179,7 @@ function App() {
 
       <AnimatePresence>{showContact && <ContactModal onClose={() => setShowContact(false)} />}</AnimatePresence>
 
-      {/* Loading Overlay for BG Removal */}
+      {/* Enhanced Loading Overlay */}
       <AnimatePresence>
         {isRemovingBg && (
           <motion.div 
@@ -157,10 +188,45 @@ function App() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center"
           >
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-white text-lg font-medium">Removing Background...</p>
-              <p className="text-white/50 text-sm mt-2">This may take a few seconds</p>
+            <div className="text-center max-w-md px-6">
+              {/* Circular Progress */}
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <svg className="w-24 h-24 transform -rotate-90">
+                  <circle 
+                    cx="48" 
+                    cy="48" 
+                    r="42" 
+                    stroke="rgba(255,255,255,0.1)" 
+                    strokeWidth="8" 
+                    fill="none"
+                  />
+                  <circle 
+                    cx="48" 
+                    cy="48" 
+                    r="42" 
+                    stroke="white" 
+                    strokeWidth="8" 
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 42}`}
+                    strokeDashoffset={`${2 * Math.PI * 42 * (1 - bgRemovalProgress / 100)}`}
+                    className="transition-all duration-300"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-bold">{bgRemovalProgress}%</span>
+                </div>
+              </div>
+
+              <p className="text-white text-lg font-medium mb-2">
+                {bgRemovalProgress < 40 ? 'Loading AI Model...' : 
+                 bgRemovalProgress < 50 ? 'Processing Image...' : 
+                 bgRemovalProgress < 90 ? 'Removing Background...' : 
+                 'Almost Done!'}
+              </p>
+              <p className="text-white/50 text-sm">
+                {bgRemovalProgress < 40 ? 'First time may take longer' : 'Please wait...'}
+              </p>
             </div>
           </motion.div>
         )}

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image"; // 👈 Image Import kiya
 import GlassCard from "@/components/GlassCard";
 import { 
   rotatePDF, mergePDFs, splitPDF, protectPDF, 
@@ -23,7 +24,6 @@ const PDFViewer = dynamic(() => import("@/components/PDFViewer"), {
   loading: () => <div className="text-white/50 flex items-center gap-2"><Loader2 className="animate-spin w-4 h-4" /> Loading Viewer...</div>,
 });
 
-// Social Links Configuration
 const SOCIAL_LINKS = [
   { name: "Portfolio", icon: Globe, url: "https://priyanshrajbhar.vercel.app/" },
   { name: "GitHub", icon: Github, url: "https://github.com/priyansh-86" },
@@ -48,16 +48,14 @@ const tools = [
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   
-  // States
   const [mergeFiles, setMergeFiles] = useState<File[]>([]); 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [splitRange, setSplitRange] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [watermarkText, setWatermarkText] = useState<string>(""); 
   
-  // UI States
   const [showSignPad, setShowSignPad] = useState(false);
-  const [isContactOpen, setIsContactOpen] = useState(false); // 👈 Contact Modal State
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   
   const [activeTool, setActiveTool] = useState<string>(""); 
@@ -207,7 +205,7 @@ export default function Home() {
       <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-red-900/20 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* 🔹 CONNECT BUTTON (Fixed Top Right) */}
+      {/* 🔹 CONNECT BUTTON */}
       <button 
         onClick={() => setIsContactOpen(true)}
         className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full transition-all text-white text-sm font-medium shadow-lg hover:shadow-white/5"
@@ -223,7 +221,6 @@ export default function Home() {
       {isContactOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <GlassCard className="w-full max-w-md p-0 relative overflow-hidden shadow-2xl border-white/20">
-            {/* Header */}
             <div className="p-6 pb-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <h2 className="text-xl font-bold text-white">Let's Connect</h2>
               <button onClick={() => setIsContactOpen(false)} className="p-1 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors">
@@ -231,7 +228,6 @@ export default function Home() {
               </button>
             </div>
             
-            {/* Links Grid */}
             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/20">
               {SOCIAL_LINKS.map((link) => (
                 <a 
@@ -253,7 +249,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Footer */}
             <div className="p-4 bg-white/5 border-t border-white/10 text-center">
               <p className="text-xs text-white/30">Developed by <span className="text-white/60 font-medium">Priyansh</span> 🚀</p>
             </div>
@@ -264,7 +259,11 @@ export default function Home() {
       {/* ==================== DASHBOARD VIEW ==================== */}
       {!file && imageFiles.length === 0 ? (
         <div className="w-full max-w-5xl animate-in fade-in zoom-in duration-500">
-           <div className="text-center mb-10 z-10 relative">
+           <div className="text-center mb-10 z-10 relative flex flex-col items-center">
+            {/* 🟢 LOGO ADDED HERE */}
+            <div className="mb-4 relative w-20 h-20">
+              <Image src="/logo.png" alt="Logo" fill className="object-contain drop-shadow-2xl" />
+            </div>
             <h1 className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 mb-4 tracking-tight">Glass PDF</h1>
             <p className="text-glass-text text-lg max-w-xl mx-auto">Minimal. Secure. Serverless.</p>
           </div>
@@ -352,11 +351,10 @@ export default function Home() {
                        <tool.icon className="w-4 h-4 opacity-70 group-hover:opacity-100" /> {tool.name}
                      </button>
                      
-                     {/* MERGE UI WITH DRAG & DROP */}
+                     {/* MERGE UI */}
                      {activeTool === "merge" && tool.id === "merge" && (
                        <div className="ml-2 pl-2 border-l-2 border-white/10 mt-2 mb-2 animate-in slide-in-from-left-2 flex flex-col gap-2">
                          <button onClick={() => mergeInputRef.current?.click()} className="text-xs flex items-center justify-center gap-2 text-blue-300 hover:text-blue-200 bg-blue-500/10 px-3 py-3 rounded-md border border-blue-500/20 w-full transition-colors mb-2"><Plus className="w-3 h-3" /> Add PDF Files</button>
-                         
                          <DragDropContext onDragEnd={onDragEnd}>
                            <Droppable droppableId="merge-list">
                              {(provided) => (
@@ -364,17 +362,10 @@ export default function Home() {
                                  {mergeFiles.map((f, index) => (
                                    <Draggable key={f.name + index} draggableId={f.name + index} index={index}>
                                      {(provided) => (
-                                       <div 
-                                         ref={provided.innerRef}
-                                         {...provided.draggableProps}
-                                         className="bg-white/5 p-2 rounded border border-white/10 flex items-center justify-between group/item"
-                                       >
+                                       <div ref={provided.innerRef} {...provided.draggableProps} className="bg-white/5 p-2 rounded border border-white/10 flex items-center justify-between group/item">
                                          <div className="flex items-center gap-2 overflow-hidden">
-                                           <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-white/30 hover:text-white">
-                                              <GripVertical className="w-4 h-4" />
-                                           </div>
-                                           <span className="text-xs text-white/50 w-4">{index + 1}.</span>
-                                           <span className="text-xs text-white truncate max-w-[100px]">{f.name}</span>
+                                           <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-white/30 hover:text-white"><GripVertical className="w-4 h-4" /></div>
+                                           <span className="text-xs text-white/50 w-4">{index + 1}.</span><span className="text-xs text-white truncate max-w-[100px]">{f.name}</span>
                                          </div>
                                          <button onClick={() => removeFile(index, 'merge')} className="p-1 hover:bg-red-500/20 hover:text-red-400 rounded"><Trash2 className="w-3 h-3" /></button>
                                        </div>
@@ -395,11 +386,7 @@ export default function Home() {
                           <div className="bg-white/5 p-3 rounded-lg border border-white/10">
                             <p className="text-[11px] text-white/70 mb-2">Draw your signature below.</p>
                             <div className="border border-white/20 rounded bg-white">
-                              <SignatureCanvas 
-                                ref={sigCanvasRef}
-                                penColor="black"
-                                canvasProps={{width: 230, height: 100, className: 'sigCanvas'}} 
-                              />
+                              <SignatureCanvas ref={sigCanvasRef} penColor="black" canvasProps={{width: 230, height: 100, className: 'sigCanvas'}} />
                             </div>
                             <button onClick={() => sigCanvasRef.current?.clear()} className="text-[10px] text-red-400 mt-2 flex items-center gap-1 hover:underline"><Eraser className="w-3 h-3" /> Clear Signature</button>
                           </div>

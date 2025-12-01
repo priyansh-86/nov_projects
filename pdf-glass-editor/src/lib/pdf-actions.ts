@@ -96,7 +96,7 @@ export const protectPDF = async (file: File, password: string) => {
     const pdfDoc = await PDFDocument.load(fileBuffer);
     // @ts-ignore
     if (typeof pdfDoc.encrypt !== 'function') {
-      alert("Please update pdf-lib to v1.17.1+");
+      alert("Please update pdf-lib");
       return false;
     }
     // @ts-ignore
@@ -145,9 +145,7 @@ export const imagesToPDF = async (files: File[]) => {
   }
 };
 
-// ==============================
-// 7. WATERMARK (NEW) 💧
-// ==============================
+// 7. WATERMARK
 export const addWatermark = async (file: File, text: string) => {
   try {
     const fileBuffer = await readFileAsync(file);
@@ -161,13 +159,12 @@ export const addWatermark = async (file: File, text: string) => {
       const textWidth = font.widthOfTextAtSize(text, fontSize);
       const textHeight = font.heightAtSize(fontSize);
 
-      // Draw text diagonally in center
       page.drawText(text, {
         x: width / 2 - textWidth / 2,
         y: height / 2 - textHeight / 2,
         size: fontSize,
         font: font,
-        color: rgb(0.75, 0.75, 0.75), // Light Gray
+        color: rgb(0.75, 0.75, 0.75),
         opacity: 0.5,
         rotate: degrees(45),
       });
@@ -182,9 +179,7 @@ export const addWatermark = async (file: File, text: string) => {
   }
 };
 
-// ==============================
-// 8. PAGE NUMBERS (NEW) 🔢
-// ==============================
+// 8. PAGE NUMBERS
 export const addPageNumbers = async (file: File) => {
   try {
     const fileBuffer = await readFileAsync(file);
@@ -200,7 +195,7 @@ export const addPageNumbers = async (file: File) => {
       const textWidth = font.widthOfTextAtSize(text, fontSize);
 
       page.drawText(text, {
-        x: width / 2 - textWidth / 2, // Center Bottom
+        x: width / 2 - textWidth / 2,
         y: 20,
         size: fontSize,
         font: font,
@@ -213,6 +208,41 @@ export const addPageNumbers = async (file: File) => {
     return true;
   } catch (error) {
     console.error("Error adding page numbers:", error);
+    return false;
+  }
+};
+
+// ==============================
+// 9. E-SIGNATURE (NEW) ✍️
+// ==============================
+export const addSignature = async (file: File, signatureDataUrl: string) => {
+  try {
+    const fileBuffer = await readFileAsync(file);
+    const pdfDoc = await PDFDocument.load(fileBuffer);
+    const pages = pdfDoc.getPages();
+    
+    // Embed the signature image (PNG)
+    const signatureImage = await pdfDoc.embedPng(signatureDataUrl);
+    
+    // Scale image (adjust size as needed)
+    const { width, height } = signatureImage.scale(0.3);
+
+    // Add to Last Page (Bottom Right)
+    const lastPage = pages[pages.length - 1];
+    const { width: pageWidth } = lastPage.getSize();
+
+    lastPage.drawImage(signatureImage, {
+      x: pageWidth - width - 50, // 50px from right
+      y: 50, // 50px from bottom
+      width,
+      height,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    download(pdfBytes, `signed-${file.name}`, "application/pdf");
+    return true;
+  } catch (error) {
+    console.error("Error adding signature:", error);
     return false;
   }
 };

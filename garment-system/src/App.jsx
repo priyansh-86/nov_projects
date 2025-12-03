@@ -10,7 +10,8 @@ import {
   Edit2,
   Check,
   X,
-  PlusCircle
+  PlusCircle,
+  CalendarDays
 } from 'lucide-react';
 
 // --- INITIAL DATA ---
@@ -71,14 +72,17 @@ const App = () => {
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [pieces, setPieces] = useState('');
-  const [workDate, setWorkDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // CHANGE 1: Use Month (YYYY-MM) instead of full Date
+  const [workMonth, setWorkMonth] = useState(new Date().toISOString().slice(0, 7)); // e.g., "2025-12"
+  
   const [advEmp, setAdvEmp] = useState('');
   const [advAmount, setAdvAmount] = useState('');
-  const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]);
+  const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]); // Advance date can remain specific if needed
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
 
   // Style Editing State
-  const [editingRate, setEditingRate] = useState(null); // { styleId, rateIndex }
+  const [editingRate, setEditingRate] = useState(null); 
   const [tempRateVal, setTempRateVal] = useState('');
   const [newStyleName, setNewStyleName] = useState('');
   const [newRateName, setNewRateName] = useState('');
@@ -105,7 +109,7 @@ const App = () => {
     
     setWorkLogs([{
       id: Date.now(),
-      date: workDate,
+      date: workMonth, // Saving just the Month (YYYY-MM)
       empId: parseInt(selectedEmp),
       styleName: styleObj.name,
       component: selectedComponent,
@@ -122,7 +126,6 @@ const App = () => {
     setAdvAmount('');
   };
 
-  // --- STYLE MANAGEMENT ACTIONS ---
   const addNewStyle = () => {
     if (!newStyleName) return;
     const newStyle = { id: Date.now(), name: newStyleName, rates: [] };
@@ -176,16 +179,16 @@ const App = () => {
 
   // --- REPORT CALC ---
   const getSalaryReport = () => {
-    const [year, month] = reportMonth.split('-');
     return employees.map(emp => {
+      // CHANGE 2: Smart Filter (Matches both "2025-12" and "2025-12-05")
       const empLogs = workLogs.filter(log => {
-        const d = new Date(log.date);
-        return log.empId === emp.id && d.getFullYear() === parseInt(year) && d.getMonth() + 1 === parseInt(month);
+        return log.empId === emp.id && log.date.startsWith(reportMonth);
       });
+      
       const empAdv = advances.filter(adv => {
-        const d = new Date(adv.date);
-        return adv.empId === emp.id && d.getFullYear() === parseInt(year) && d.getMonth() + 1 === parseInt(month);
+        return adv.empId === emp.id && adv.date.startsWith(reportMonth);
       });
+
       const totalWorkAmount = empLogs.reduce((sum, log) => sum + log.amount, 0);
       const totalAdvance = empAdv.reduce((sum, adv) => sum + adv.amount, 0);
       return { ...emp, totalPieces: empLogs.reduce((s, l) => s + l.pieces, 0), totalWorkAmount, totalAdvance, netSalary: totalWorkAmount - totalAdvance };
@@ -249,15 +252,27 @@ const App = () => {
               <PlusCircle className="mr-2" /> New Entry
             </h2>
             <div className="space-y-4">
-              <GlassInput type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
+              
+              {/* CHANGE 3: Month Input instead of Date */}
+              <div>
+                <label className="text-gray-400 text-xs ml-1 mb-1 block">Production Month</label>
+                <GlassInput 
+                  type="month" 
+                  value={workMonth} 
+                  onChange={(e) => setWorkMonth(e.target.value)} 
+                />
+              </div>
+
               <GlassSelect value={selectedEmp} onChange={(e) => setSelectedEmp(e.target.value)}>
                 <option value="">Select Employee</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
               </GlassSelect>
+              
               <GlassSelect value={selectedStyle} onChange={(e) => { setSelectedStyle(e.target.value); setSelectedComponent(''); }}>
                 <option value="">Select Style</option>
                 {styles.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </GlassSelect>
+              
               {selectedStyle && (
                 <GlassSelect value={selectedComponent} onChange={(e) => setSelectedComponent(e.target.value)}>
                   <option value="">Select Operation</option>
@@ -266,10 +281,11 @@ const App = () => {
                   ))}
                 </GlassSelect>
               )}
+              
               <GlassInput type="number" placeholder="Pieces Made" value={pieces} onChange={(e) => setPieces(e.target.value)} />
               
               <button onClick={addWorkEntry} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-2.5 rounded-lg shadow-lg shadow-blue-900/50 transition-all font-medium">
-                Save Entry
+                Save Monthly Entry
               </button>
             </div>
           </GlassCard>
@@ -280,7 +296,7 @@ const App = () => {
               <table className="w-full text-left text-sm text-gray-300">
                 <thead className="bg-white/5 text-gray-200">
                   <tr>
-                    <th className="p-3 rounded-tl-lg">Date</th>
+                    <th className="p-3 rounded-tl-lg">Month</th>
                     <th className="p-3">Employee</th>
                     <th className="p-3">Style</th>
                     <th className="p-3 text-right">Pcs</th>
@@ -292,7 +308,11 @@ const App = () => {
                   {workLogs.length === 0 ? <tr><td colSpan="6" className="p-4 text-center opacity-50">No data</td></tr> :
                     workLogs.slice(0, 10).map(log => (
                       <tr key={log.id} className="hover:bg-white/5 transition">
-                        <td className="p-3">{log.date}</td>
+                        {/* Display Month nicely */}
+                        <td className="p-3 flex items-center gap-2">
+                           <CalendarDays size={14} className="text-blue-400"/>
+                           {log.date}
+                        </td>
                         <td className="p-3 text-white font-medium">{employees.find(e => e.id === log.empId)?.name}</td>
                         <td className="p-3 opacity-80">{log.styleName} - {log.component}</td>
                         <td className="p-3 text-right">{log.pieces}</td>
@@ -310,7 +330,7 @@ const App = () => {
         </div>
       )}
 
-      {/* --- STYLES MANAGEMENT (New Feature) --- */}
+      {/* --- STYLES MANAGEMENT --- */}
       {activeTab === 'styles' && (
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Add New Style Block */}
@@ -343,10 +363,8 @@ const App = () => {
                   {style.rates.map((r, idx) => (
                     <div key={idx} className="bg-black/20 p-3 rounded-lg flex justify-between items-center group">
                       <span className="text-gray-300 text-sm">{r.name}</span>
-                      
                       <div className="flex items-center gap-3">
                         {editingRate?.styleId === style.id && editingRate?.rateIndex === idx ? (
-                          // Edit Mode
                           <div className="flex items-center gap-1">
                              <input 
                                type="number" 
@@ -359,7 +377,6 @@ const App = () => {
                              <button onClick={() => setEditingRate(null)} className="text-gray-400"><X size={16}/></button>
                           </div>
                         ) : (
-                          // Display Mode
                           <>
                             <span className="font-semibold text-green-400">₹{r.rate.toFixed(2)}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -379,7 +396,6 @@ const App = () => {
                     </div>
                   ))}
                   
-                  {/* Add Rate Form Inline */}
                   {activeStyleForAdd === style.id ? (
                     <div className="bg-blue-900/20 border border-blue-500/30 p-2 rounded-lg flex gap-2 items-center">
                        <input placeholder="Name" className="w-full bg-transparent border-b border-white/20 text-sm text-white focus:outline-none" value={newRateName} onChange={e => setNewRateName(e.target.value)} />
@@ -402,7 +418,7 @@ const App = () => {
         </div>
       )}
 
-      {/* --- EMPLOYEES & ADVANCE TABS (Glass UI applied) --- */}
+      {/* --- EMPLOYEES & ADVANCE & REPORTS --- */}
       {(activeTab === 'employees' || activeTab === 'advances' || activeTab === 'reports') && (
         <div className="max-w-4xl mx-auto">
           {activeTab === 'employees' && (

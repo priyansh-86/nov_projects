@@ -11,7 +11,11 @@ import {
   Check,
   X,
   PlusCircle,
-  CalendarDays
+  CalendarDays,
+  Settings,
+  Download,
+  Upload,
+  Save
 } from 'lucide-react';
 
 // --- INITIAL DATA ---
@@ -72,13 +76,11 @@ const App = () => {
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [pieces, setPieces] = useState('');
-  
-  // CHANGE 1: Use Month (YYYY-MM) instead of full Date
-  const [workMonth, setWorkMonth] = useState(new Date().toISOString().slice(0, 7)); // e.g., "2025-12"
+  const [workMonth, setWorkMonth] = useState(new Date().toISOString().slice(0, 7)); 
   
   const [advEmp, setAdvEmp] = useState('');
   const [advAmount, setAdvAmount] = useState('');
-  const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]); // Advance date can remain specific if needed
+  const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
 
   // Style Editing State
@@ -95,6 +97,47 @@ const App = () => {
   useEffect(() => { localStorage.setItem('gpms_workLogs', JSON.stringify(workLogs)); }, [workLogs]);
   useEffect(() => { localStorage.setItem('gpms_advances', JSON.stringify(advances)); }, [advances]);
 
+  // --- DATA MANAGEMENT (BACKUP/RESTORE) ---
+  const exportData = () => {
+    const data = {
+      employees,
+      styles,
+      workLogs,
+      advances,
+      backupDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `garment_data_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const importData = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (confirm("Warning: This will overwrite your current data with the backup file. Continue?")) {
+          if(data.employees) setEmployees(data.employees);
+          if(data.styles) setStyles(data.styles);
+          if(data.workLogs) setWorkLogs(data.workLogs);
+          if(data.advances) setAdvances(data.advances);
+          alert("Data restored successfully!");
+        }
+      } catch (error) {
+        alert("Invalid backup file!");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // --- ACTIONS ---
   const addEmployee = (name) => {
     if (!name) return;
@@ -109,7 +152,7 @@ const App = () => {
     
     setWorkLogs([{
       id: Date.now(),
-      date: workMonth, // Saving just the Month (YYYY-MM)
+      date: workMonth,
       empId: parseInt(selectedEmp),
       styleName: styleObj.name,
       component: selectedComponent,
@@ -180,15 +223,8 @@ const App = () => {
   // --- REPORT CALC ---
   const getSalaryReport = () => {
     return employees.map(emp => {
-      // CHANGE 2: Smart Filter (Matches both "2025-12" and "2025-12-05")
-      const empLogs = workLogs.filter(log => {
-        return log.empId === emp.id && log.date.startsWith(reportMonth);
-      });
-      
-      const empAdv = advances.filter(adv => {
-        return adv.empId === emp.id && adv.date.startsWith(reportMonth);
-      });
-
+      const empLogs = workLogs.filter(log => log.empId === emp.id && log.date.startsWith(reportMonth));
+      const empAdv = advances.filter(adv => adv.empId === emp.id && adv.date.startsWith(reportMonth));
       const totalWorkAmount = empLogs.reduce((sum, log) => sum + log.amount, 0);
       const totalAdvance = empAdv.reduce((sum, adv) => sum + adv.amount, 0);
       return { ...emp, totalPieces: empLogs.reduce((s, l) => s + l.pieces, 0), totalWorkAmount, totalAdvance, netSalary: totalWorkAmount - totalAdvance };
@@ -215,7 +251,7 @@ const App = () => {
   const TabButton = ({ id, label, icon: Icon }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`flex items-center space-x-2 px-5 py-2.5 rounded-lg transition-all duration-300 ${
+      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 whitespace-nowrap ${
         activeTab === id 
           ? 'bg-blue-600/80 text-white shadow-lg shadow-blue-500/30 border border-blue-400/30' 
           : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-transparent'
@@ -242,6 +278,7 @@ const App = () => {
         <TabButton id="advances" label="Advances" icon={TrendingDown} />
         <TabButton id="reports" label="Salary Report" icon={FileText} />
         <TabButton id="styles" label="Manage Styles" icon={Scissors} />
+        <TabButton id="settings" label="Data & Backup" icon={Settings} />
       </div>
 
       {/* --- DASHBOARD --- */}
@@ -252,27 +289,18 @@ const App = () => {
               <PlusCircle className="mr-2" /> New Entry
             </h2>
             <div className="space-y-4">
-              
-              {/* CHANGE 3: Month Input instead of Date */}
               <div>
                 <label className="text-gray-400 text-xs ml-1 mb-1 block">Production Month</label>
-                <GlassInput 
-                  type="month" 
-                  value={workMonth} 
-                  onChange={(e) => setWorkMonth(e.target.value)} 
-                />
+                <GlassInput type="month" value={workMonth} onChange={(e) => setWorkMonth(e.target.value)} />
               </div>
-
               <GlassSelect value={selectedEmp} onChange={(e) => setSelectedEmp(e.target.value)}>
                 <option value="">Select Employee</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
               </GlassSelect>
-              
               <GlassSelect value={selectedStyle} onChange={(e) => { setSelectedStyle(e.target.value); setSelectedComponent(''); }}>
                 <option value="">Select Style</option>
                 {styles.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </GlassSelect>
-              
               {selectedStyle && (
                 <GlassSelect value={selectedComponent} onChange={(e) => setSelectedComponent(e.target.value)}>
                   <option value="">Select Operation</option>
@@ -281,9 +309,7 @@ const App = () => {
                   ))}
                 </GlassSelect>
               )}
-              
               <GlassInput type="number" placeholder="Pieces Made" value={pieces} onChange={(e) => setPieces(e.target.value)} />
-              
               <button onClick={addWorkEntry} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-2.5 rounded-lg shadow-lg shadow-blue-900/50 transition-all font-medium">
                 Save Monthly Entry
               </button>
@@ -296,23 +322,19 @@ const App = () => {
               <table className="w-full text-left text-sm text-gray-300">
                 <thead className="bg-white/5 text-gray-200">
                   <tr>
-                    <th className="p-3 rounded-tl-lg">Month</th>
+                    <th className="p-3">Month</th>
                     <th className="p-3">Employee</th>
                     <th className="p-3">Style</th>
                     <th className="p-3 text-right">Pcs</th>
                     <th className="p-3 text-right">Amount</th>
-                    <th className="p-3 text-center rounded-tr-lg">Action</th>
+                    <th className="p-3 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {workLogs.length === 0 ? <tr><td colSpan="6" className="p-4 text-center opacity-50">No data</td></tr> :
                     workLogs.slice(0, 10).map(log => (
                       <tr key={log.id} className="hover:bg-white/5 transition">
-                        {/* Display Month nicely */}
-                        <td className="p-3 flex items-center gap-2">
-                           <CalendarDays size={14} className="text-blue-400"/>
-                           {log.date}
-                        </td>
+                        <td className="p-3 flex items-center gap-2"><CalendarDays size={14} className="text-blue-400"/>{log.date}</td>
                         <td className="p-3 text-white font-medium">{employees.find(e => e.id === log.empId)?.name}</td>
                         <td className="p-3 opacity-80">{log.styleName} - {log.component}</td>
                         <td className="p-3 text-right">{log.pieces}</td>
@@ -333,24 +355,12 @@ const App = () => {
       {/* --- STYLES MANAGEMENT --- */}
       {activeTab === 'styles' && (
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Add New Style Block */}
           <GlassCard>
             <div className="flex gap-4">
-              <GlassInput 
-                placeholder="Enter New Style / Contract Name" 
-                value={newStyleName}
-                onChange={(e) => setNewStyleName(e.target.value)}
-              />
-              <button 
-                onClick={addNewStyle}
-                className="bg-green-600/80 hover:bg-green-600 text-white px-6 rounded-lg whitespace-nowrap transition-all"
-              >
-                + Add Style
-              </button>
+              <GlassInput placeholder="Enter New Style / Contract Name" value={newStyleName} onChange={(e) => setNewStyleName(e.target.value)} />
+              <button onClick={addNewStyle} className="bg-green-600/80 hover:bg-green-600 text-white px-6 rounded-lg whitespace-nowrap transition-all">+ Add Style</button>
             </div>
           </GlassCard>
-
-          {/* List Styles */}
           <div className="grid gap-6">
             {styles.map(style => (
               <GlassCard key={style.id} className="relative overflow-hidden">
@@ -358,7 +368,6 @@ const App = () => {
                   <h3 className="font-bold text-xl text-indigo-300">{style.name}</h3>
                   <button onClick={() => deleteStyle(style.id)} className="text-red-400 text-xs hover:bg-red-500/20 px-2 py-1 rounded transition">Delete Style</button>
                 </div>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {style.rates.map((r, idx) => (
                     <div key={idx} className="bg-black/20 p-3 rounded-lg flex justify-between items-center group">
@@ -366,13 +375,7 @@ const App = () => {
                       <div className="flex items-center gap-3">
                         {editingRate?.styleId === style.id && editingRate?.rateIndex === idx ? (
                           <div className="flex items-center gap-1">
-                             <input 
-                               type="number" 
-                               value={tempRateVal} 
-                               onChange={(e) => setTempRateVal(e.target.value)}
-                               className="w-20 bg-black/40 border border-blue-500 rounded px-1 py-0.5 text-right text-sm text-white"
-                               autoFocus
-                             />
+                             <input type="number" value={tempRateVal} onChange={(e) => setTempRateVal(e.target.value)} className="w-20 bg-black/40 border border-blue-500 rounded px-1 py-0.5 text-right text-sm text-white" autoFocus />
                              <button onClick={() => updateRateValue(style.id, idx)} className="text-green-400"><Check size={16}/></button>
                              <button onClick={() => setEditingRate(null)} className="text-gray-400"><X size={16}/></button>
                           </div>
@@ -380,22 +383,14 @@ const App = () => {
                           <>
                             <span className="font-semibold text-green-400">₹{r.rate.toFixed(2)}</span>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={() => { setEditingRate({ styleId: style.id, rateIndex: idx }); setTempRateVal(r.rate); }}
-                                className="text-blue-400 hover:text-blue-300"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button onClick={() => deleteRateFromStyle(style.id, idx)} className="text-red-400 hover:text-red-300">
-                                <Trash2 size={14} />
-                              </button>
+                              <button onClick={() => { setEditingRate({ styleId: style.id, rateIndex: idx }); setTempRateVal(r.rate); }} className="text-blue-400 hover:text-blue-300"><Edit2 size={14} /></button>
+                              <button onClick={() => deleteRateFromStyle(style.id, idx)} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
                             </div>
                           </>
                         )}
                       </div>
                     </div>
                   ))}
-                  
                   {activeStyleForAdd === style.id ? (
                     <div className="bg-blue-900/20 border border-blue-500/30 p-2 rounded-lg flex gap-2 items-center">
                        <input placeholder="Name" className="w-full bg-transparent border-b border-white/20 text-sm text-white focus:outline-none" value={newRateName} onChange={e => setNewRateName(e.target.value)} />
@@ -404,17 +399,64 @@ const App = () => {
                        <button onClick={() => setActiveStyleForAdd(null)} className="text-red-400"><X size={18}/></button>
                     </div>
                   ) : (
-                    <button 
-                      onClick={() => setActiveStyleForAdd(style.id)}
-                      className="border-2 border-dashed border-white/10 text-gray-400 rounded-lg p-2 text-sm hover:border-white/30 hover:text-white transition flex justify-center items-center gap-1"
-                    >
-                      <Plus size={16} /> Add Rate
-                    </button>
+                    <button onClick={() => setActiveStyleForAdd(style.id)} className="border-2 border-dashed border-white/10 text-gray-400 rounded-lg p-2 text-sm hover:border-white/30 hover:text-white transition flex justify-center items-center gap-1"><Plus size={16} /> Add Rate</button>
                   )}
                 </div>
               </GlassCard>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* --- SETTINGS / DATA MANAGEMENT (New Tab) --- */}
+      {activeTab === 'settings' && (
+        <div className="max-w-2xl mx-auto">
+          <GlassCard className="text-center">
+            <h2 className="text-2xl font-bold text-gray-200 mb-2">Data Backup & Restore</h2>
+            <p className="text-gray-400 mb-8">Save your data to a file so you never lose it.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Export Section */}
+              <div className="bg-blue-600/10 border border-blue-500/30 p-6 rounded-xl hover:bg-blue-600/20 transition">
+                <Download size={48} className="mx-auto text-blue-400 mb-4" />
+                <h3 className="text-lg font-semibold text-blue-200 mb-2">Download Backup</h3>
+                <p className="text-xs text-gray-400 mb-4">Save all employees, styles, and work logs to your computer.</p>
+                <button 
+                  onClick={exportData}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2"
+                >
+                  <Save size={16} /> Export Data
+                </button>
+              </div>
+
+              {/* Import Section */}
+              <div className="bg-green-600/10 border border-green-500/30 p-6 rounded-xl hover:bg-green-600/20 transition">
+                <Upload size={48} className="mx-auto text-green-400 mb-4" />
+                <h3 className="text-lg font-semibold text-green-200 mb-2">Restore Backup</h3>
+                <p className="text-xs text-gray-400 mb-4">Upload a previously saved backup file to restore data.</p>
+                <label className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer transition">
+                  <Upload size={16} /> Select File
+                  <input type="file" accept=".json" onChange={importData} className="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-left">
+              <h4 className="text-red-300 font-bold mb-1 flex items-center gap-2"><Trash2 size={16}/> Danger Zone</h4>
+              <p className="text-sm text-gray-400 mb-3">Clear all data and start fresh. This cannot be undone.</p>
+              <button 
+                onClick={() => {
+                  if(confirm("DANGER: Are you sure you want to DELETE ALL DATA? This cannot be undone.")) {
+                    localStorage.clear();
+                    window.location.reload();
+                  }
+                }}
+                className="text-red-400 text-sm hover:underline"
+              >
+                Reset Everything
+              </button>
+            </div>
+          </GlassCard>
         </div>
       )}
 
@@ -432,7 +474,6 @@ const App = () => {
               </div>
             </GlassCard>
           )}
-
           {activeTab === 'advances' && (
              <div className="grid md:grid-cols-2 gap-6">
                <GlassCard>
@@ -457,7 +498,6 @@ const App = () => {
                </GlassCard>
              </div>
           )}
-
           {activeTab === 'reports' && (
             <GlassCard>
               <div className="flex justify-between items-center mb-6">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, Scissors, ClipboardList, Plus, Trash2, FileText, TrendingDown, 
   Edit2, Check, X, PlusCircle, CalendarDays, Settings, Download, Upload, 
-  Save, Printer, Cloud, LogIn, LogOut, ChevronDown, ChevronUp
+  Save, Printer, Cloud, LogIn, LogOut, ChevronDown, ChevronUp, BarChart3
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -181,9 +181,6 @@ const App = () => {
   const [advances, setAdvances] = useState(() => JSON.parse(localStorage.getItem('gpms_advances')) || []);
   const [user, setUser] = useState(null); 
 
-  // Report Expansion State
-  const [expandedReportRow, setExpandedReportRow] = useState(null);
-
   const [selectedEmp, setSelectedEmp] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
@@ -194,6 +191,12 @@ const App = () => {
   const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
   const [newEmpName, setNewEmpName] = useState(''); 
+  const [expandedReportRow, setExpandedReportRow] = useState(null);
+
+  // --- ANALYTICS STATE ---
+  const [analyticsStyle, setAnalyticsStyle] = useState('');
+  const [analyticsOperation, setAnalyticsOperation] = useState('');
+  const [analyticsMonth, setAnalyticsMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const [editingRate, setEditingRate] = useState(null); 
   const [tempRateVal, setTempRateVal] = useState('');
@@ -217,21 +220,7 @@ const App = () => {
   const handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (error) { alert("Login Failed: " + error.message); } };
   const handleLogout = async () => { await signOut(auth); };
   const uploadToCloud = async () => { if(!user) return alert("Login first!"); try { await setDoc(doc(db, "users", user.uid), { employees, styles, workLogs, advances, lastUpdated: new Date().toISOString() }); alert("✅ Uploaded!"); } catch (error) { alert("Failed: " + error.message); } };
-  const downloadFromCloud = async () => {
-    if(!user) return alert("Please login first!");
-    if(!confirm("⚠️ Local data will be merged with Cloud data. Continue?")) return;
-    try {
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if(data.employees) setEmployees(data.employees);
-        if(data.styles) setStyles(mergeStylesWithInitial(data.styles || []));
-        if(data.workLogs) setWorkLogs(data.workLogs);
-        if(data.advances) setAdvances(data.advances);
-        alert("✅ Data Restored & Merged!");
-      } else { alert("No Cloud data found."); }
-    } catch (error) { alert("Download Failed: " + error.message); }
-  };
+  const downloadFromCloud = async () => { if(!user) return alert("Please login first!"); if(!confirm("⚠️ Local data will be merged. Continue?")) return; try { const docSnap = await getDoc(doc(db, "users", user.uid)); if (docSnap.exists()) { const data = docSnap.data(); if(data.employees) setEmployees(data.employees); if(data.styles) setStyles(mergeStylesWithInitial(data.styles || [])); if(data.workLogs) setWorkLogs(data.workLogs); if(data.advances) setAdvances(data.advances); alert("✅ Merged & Restored!"); } else { alert("No Cloud data found."); } } catch (error) { alert("Download Failed: " + error.message); } };
 
   const handleEnterKey = (e, action) => { if (e.key === 'Enter') { e.preventDefault(); action(); } };
   const handleTextChange = (setter) => (e) => { setter(toTitleCase(e.target.value)); };
@@ -243,9 +232,7 @@ const App = () => {
     const styleObj = styles.find(s => s.id === parseInt(selectedStyle));
     const rateObj = styleObj.rates.find(r => r.name === selectedComponent);
     const amount = parseInt(pieces) * rateObj.rate;
-    
     setWorkLogs([{ id: Date.now(), date: workMonth, empId: parseInt(selectedEmp), styleName: styleObj.name, component: selectedComponent, rate: rateObj.rate, pieces: parseInt(pieces), amount: amount }, ...workLogs]);
-    
     setPieces(''); 
     setSelectedComponent(''); 
     setTimeout(() => { if(operationInputRef.current) operationInputRef.current.focus(); }, 10);
@@ -263,15 +250,48 @@ const App = () => {
   const exportData = () => { const data = { employees, styles, workLogs, advances }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); const link = document.createElement('a'); link.href = url; link.download = `backup.json`; link.click(); };
   const importData = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if(confirm("Overwrite?")) { setEmployees(data.employees||[]); setStyles(mergeStylesWithInitial(data.styles||[])); setWorkLogs(data.workLogs||[]); setAdvances(data.advances||[]); } } catch(err) { alert("Error"); } }; if(file) reader.readAsText(file); };
 
+  // --- ANALYTICS HELPER ---
+  const getAnalyticsData = () => {
+    if (!analyticsStyle || !analyticsOperation) return { total: 0, breakdown: [] };
+    
+    // Find Style Name from ID
+    const targetStyleName = styles.find(s => s.id === analyticsStyle)?.name;
+
+    const filtered = workLogs.filter(log => 
+      log.date.startsWith(analyticsMonth) &&
+      log.styleName === targetStyleName &&
+      log.component === analyticsOperation
+    );
+    
+    const total = filtered.reduce((sum, log) => sum + log.pieces, 0);
+    
+    // Aggregate by employee
+    const empMap = {};
+    filtered.forEach(log => {
+      if (!empMap[log.empId]) empMap[log.empId] = 0;
+      empMap[log.empId] += log.pieces;
+    });
+    
+    const breakdown = Object.entries(empMap).map(([empId, pcs]) => ({
+      name: employees.find(e => e.id === parseInt(empId))?.name || 'Unknown',
+      pieces: pcs
+    })).sort((a, b) => b.pieces - a.pieces);
+    
+    return { total, breakdown };
+  };
+
   const operationOptions = selectedStyle ? styles.find(s => s.id === parseInt(selectedStyle))?.rates.map(r => ({ id: r.name, name: `${r.name} - ₹${r.rate.toFixed(2)}` })) || [] : [];
+  
+  // Analytics Operations (Just Names)
+  const analyticsOpOptions = analyticsStyle ? styles.find(s => s.id === analyticsStyle)?.rates.map(r => ({ id: r.name, name: r.name })) || [] : [];
 
   return (
     <div className="min-h-screen p-4 md:p-8 font-sans selection:bg-blue-500/30 flex flex-col items-center select-none">
       <div className="w-full max-w-6xl">
         <header className="mb-8 text-center"><h1 className="text-4xl font-bold bg-gradient-to-r from-blue-200 to-indigo-200 bg-clip-text text-transparent">Production Manager</h1></header>
         <div className="flex flex-wrap gap-3 mb-8 justify-center">
-          {['dashboard', 'employees', 'advances', 'reports', 'styles', 'settings'].map(id => (
-            <TabButton key={id} id={id} label={id.charAt(0).toUpperCase() + id.slice(1)} icon={ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} />
+          {['dashboard', 'employees', 'advances', 'reports', 'analytics', 'styles', 'settings'].map(id => (
+            <TabButton key={id} id={id} label={id.charAt(0).toUpperCase() + id.slice(1)} icon={id === 'analytics' ? BarChart3 : (id === 'styles' ? Scissors : (id === 'settings' ? Settings : (id === 'reports' ? FileText : (id === 'advances' ? TrendingDown : (id === 'employees' ? Users : ClipboardList)))))} activeTab={activeTab} setActiveTab={setActiveTab} />
           ))}
         </div>
 
@@ -349,11 +369,88 @@ const App = () => {
           </div>
         )}
 
-        {/* --- EMPLOYEES TAB --- */}
+        {/* --- ANALYTICS TAB (NEW FEATURE) --- */}
+        {activeTab === 'analytics' && (
+          <GlassCard>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-white/10 pb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-200">Operation Analysis</h2>
+                <p className="text-sm text-gray-400">Track piece production per style & operation</p>
+              </div>
+              <div className="flex gap-3 w-full md:w-auto">
+                 <input type="month" value={analyticsMonth} onChange={e => setAnalyticsMonth(e.target.value)} className="bg-black/20 text-white border border-white/20 rounded p-2 focus:outline-none" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+               <SearchableDropdown 
+                  options={styles} 
+                  value={analyticsStyle} 
+                  onChange={(val) => { 
+                    setAnalyticsStyle(val); 
+                    setAnalyticsOperation(''); 
+                  }} 
+                  placeholder="1. Select Style..." 
+               />
+               {analyticsStyle && (
+                 <SearchableDropdown
+                    options={analyticsOpOptions}
+                    value={analyticsOperation}
+                    onChange={(val) => setAnalyticsOperation(val)}
+                    placeholder="2. Select Operation..."
+                  />
+               )}
+            </div>
+
+            {analyticsStyle && analyticsOperation && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* STATS CARD */}
+                <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 p-6 rounded-xl mb-8 flex justify-between items-center">
+                   <div>
+                      <h3 className="text-blue-300 text-sm font-semibold uppercase tracking-wider mb-1">Total Output</h3>
+                      <div className="text-4xl font-bold text-white">{getAnalyticsData().total} <span className="text-lg text-gray-400 font-normal">Pcs</span></div>
+                   </div>
+                   <div className="text-right">
+                      <div className="text-gray-400 text-sm">{analyticsOperation}</div>
+                      <div className="text-white font-medium">{styles.find(s=>s.id===analyticsStyle)?.name}</div>
+                   </div>
+                </div>
+
+                {/* BREAKDOWN TABLE */}
+                <h3 className="text-lg font-bold text-gray-200 mb-4">Employee Breakdown</h3>
+                <div className="grid gap-3">
+                  {getAnalyticsData().breakdown.map((item, idx) => (
+                    <div key={idx} className="bg-white/5 p-4 rounded-lg flex items-center justify-between hover:bg-white/10 transition">
+                       <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx===0 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-gray-400'}`}>
+                            {idx + 1}
+                          </div>
+                          <span className="font-medium text-white">{item.name}</span>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          {/* Mini Bar Chart Visual */}
+                          <div className="w-24 h-2 bg-gray-700 rounded-full hidden sm:block overflow-hidden">
+                             <div 
+                               className="h-full bg-blue-500 rounded-full" 
+                               style={{ width: `${(item.pieces / getAnalyticsData().total) * 100}%` }}
+                             ></div>
+                          </div>
+                          <span className="font-bold text-blue-300 w-16 text-right">{item.pieces} pcs</span>
+                       </div>
+                    </div>
+                  ))}
+                  {getAnalyticsData().breakdown.length === 0 && (
+                    <div className="text-center p-8 text-gray-500">No production data found for this selection.</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </GlassCard>
+        )}
+
+        {/* --- OTHER TABS (Keep them as is) --- */}
         {activeTab === 'employees' && (<GlassCard><div className="flex gap-4 mb-6 justify-center"><GlassInput value={newEmpName} onChange={handleTextChange(setNewEmpName)} onKeyDown={(e) => handleEnterKey(e, addEmployee)} placeholder="New Employee Name" className="max-w-md" /><button onClick={addEmployee} className="bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg">Add</button></div><div className="grid gap-2 max-w-2xl mx-auto">{employees.map(e => <div key={e.id} className="p-3 bg-white/5 rounded flex justify-between text-gray-300"><span>{e.name}</span><span className="opacity-50 text-xs">#{e.id}</span></div>)}</div></GlassCard>)}
         {activeTab === 'advances' && (<div className="grid md:grid-cols-2 gap-6"><GlassCard><h2 className="text-lg font-bold text-red-300 mb-4">Add Advance</h2><div className="space-y-4"><GlassInput type="date" value={advDate} onChange={e => setAdvDate(e.target.value)} /><GlassSelect value={advEmp} onChange={e => setAdvEmp(e.target.value)}><option value="">Select Employee</option>{employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</GlassSelect><GlassInput type="number" placeholder="Amount" value={advAmount} onChange={e => setAdvAmount(e.target.value)} onKeyDown={(e) => handleEnterKey(e, addAdvance)} /><button onClick={addAdvance} className="w-full bg-red-600/80 hover:bg-red-500 text-white py-2 rounded-lg">Save</button></div></GlassCard><GlassCard><h2 className="text-lg font-bold text-gray-300 mb-4">History</h2><div className="space-y-2 max-h-64 overflow-y-auto">{advances.map(a => (<div key={a.id} className="flex justify-between p-2 border-b border-white/10 text-sm"><span className="text-gray-400">{a.date} - {employees.find(e=>e.id===a.empId)?.name}</span><span className="text-red-400 font-mono">-₹{a.amount}</span></div>))}</div></GlassCard></div>)}
-        
-        {/* --- SALARY REPORT TAB (UPDATED WITH DRILL DOWN) --- */}
         {activeTab === 'reports' && (
           <GlassCard>
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -435,8 +532,6 @@ const App = () => {
             </div>
           </GlassCard>
         )}
-
-        {/* --- MANAGE STYLES TAB --- */}
         {activeTab === 'styles' && (<div className="space-y-6"><GlassCard><div className="flex gap-4 justify-center"><GlassInput value={newStyleName} onChange={handleTextChange(setNewStyleName)} onKeyDown={(e) => handleEnterKey(e, addNewStyle)} className="max-w-md" placeholder="Enter New Style / Contract Name" /><button onClick={addNewStyle} className="bg-green-600/80 hover:bg-green-600 text-white px-6 rounded-lg whitespace-nowrap transition-all">+ Add Style</button></div></GlassCard><div className="grid gap-6">{styles.map(style => (<GlassCard key={style.id} className="relative overflow-hidden"><div className="flex justify-between items-start mb-4 border-b border-white/10 pb-4"><h3 className="font-bold text-xl text-indigo-300">{style.name}</h3><button onClick={() => deleteStyle(style.id)} className="text-red-400 text-xs hover:bg-red-500/20 px-2 py-1 rounded transition">Delete Style</button></div><div className="grid grid-cols-1 md:grid-cols-2 gap-3">{style.rates.map((r, idx) => (<div key={idx} className="bg-black/20 p-3 rounded-lg flex justify-between items-center group"><span className="text-gray-300 text-sm">{r.name}</span><div className="flex items-center gap-3">{editingRate?.styleId === style.id && editingRate?.rateIndex === idx ? (<div className="flex items-center gap-1"><input type="number" value={tempRateVal} onChange={(e) => setTempRateVal(e.target.value)} onKeyDown={(e) => handleEnterKey(e, () => updateRateValue(style.id, idx))} className="w-20 bg-black/40 border border-blue-500 rounded px-1 py-0.5 text-right text-sm text-white" autoFocus /><button onClick={() => updateRateValue(style.id, idx)} className="text-green-400"><Check size={16}/></button><button onClick={() => setEditingRate(null)} className="text-gray-400"><X size={16}/></button></div>) : (<><span className="font-semibold text-green-400">₹{r.rate.toFixed(2)}</span><div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => { setEditingRate({ styleId: style.id, rateIndex: idx }); setTempRateVal(r.rate); }} className="text-blue-400 hover:text-blue-300"><Edit2 size={14} /></button><button onClick={() => deleteRateFromStyle(style.id, idx)} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button></div></>)}</div></div>))}{activeStyleForAdd === style.id ? (<div className="bg-blue-900/20 border border-blue-500/30 p-2 rounded-lg flex gap-2 items-center"><GlassInput ref={rateNameInputRef} placeholder="Name (Required)" className="w-full bg-transparent border-b border-white/20 text-sm text-white focus:outline-none" value={newRateName} onChange={handleTextChange(setNewRateName)} onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); if(ratePriceInputRef.current) ratePriceInputRef.current.focus(); }}} autoFocus /><GlassInput ref={ratePriceInputRef} placeholder="Rate (0 Allowed)" type="number" className="w-24 bg-transparent border-b border-white/20 text-sm text-white focus:outline-none" value={newRatePrice} onChange={e => setNewRatePrice(e.target.value)} onKeyDown={(e) => handleEnterKey(e, () => addNewRateToStyle(style.id))} /><button onClick={() => addNewRateToStyle(style.id)} className="text-green-400"><Check size={18}/></button><button onClick={() => setActiveStyleForAdd(null)} className="text-red-400"><X size={18}/></button></div>) : (<button onClick={() => setActiveStyleForAdd(style.id)} className="border-2 border-dashed border-white/10 text-gray-400 rounded-lg p-2 text-sm hover:border-white/30 hover:text-white transition flex justify-center items-center gap-1"><Plus size={16} /> Add Rate</button>)}</div></GlassCard>))}</div></div>)}
         {activeTab === 'settings' && (<GlassCard className="text-center"><h2 className="text-2xl font-bold text-gray-200 mb-6">Cloud & Data Management</h2><div className="mb-8 bg-indigo-900/30 border border-indigo-500/30 p-6 rounded-xl"><Cloud size={48} className="mx-auto text-indigo-400 mb-2" /><h3 className="text-xl font-semibold text-indigo-200 mb-4">Google Cloud Sync</h3>{!user ? (<button onClick={handleGoogleLogin} className="bg-white text-gray-900 px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 mx-auto hover:bg-gray-100 transition"><LogIn size={20} /> Login with Google</button>) : (<div className="space-y-4"><p className="text-indigo-300">Logged in: <span className="font-bold text-white">{user.displayName}</span></p><div className="flex gap-4 justify-center flex-wrap"><button onClick={uploadToCloud} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg flex items-center gap-2"><Upload size={18} /> Upload to Cloud</button><button onClick={downloadFromCloud} className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2 rounded-lg flex items-center gap-2"><Download size={18} /> Download from Cloud</button></div><button onClick={handleLogout} className="text-red-400 text-sm hover:underline mt-2 flex items-center justify-center gap-1 mx-auto"><LogOut size={14} /> Logout</button></div>)}</div><h3 className="text-lg font-semibold text-gray-400 mb-4">Local File Backup</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div className="bg-blue-600/10 border border-blue-500/30 p-4 rounded-xl hover:bg-blue-600/20 transition"><h3 className="font-semibold text-blue-200 mb-2">Save to File</h3><button onClick={exportData} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg w-full flex items-center justify-center gap-2"><Save size={16} /> Export JSON</button></div><div className="bg-green-600/10 border border-green-500/30 p-4 rounded-xl hover:bg-green-600/20 transition"><h3 className="font-semibold text-green-200 mb-2">Load from File</h3><label className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg w-full flex items-center justify-center gap-2 cursor-pointer transition"><Upload size={16} /> Select JSON<input type="file" accept=".json" onChange={importData} className="hidden" /></label></div></div><div className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-left"><h4 className="text-red-300 font-bold mb-1 flex items-center gap-2"><Trash2 size={16}/> Danger Zone</h4><p className="text-sm text-gray-400 mb-3">Clear all data and start fresh.</p><button onClick={() => { if(confirm("DANGER: DELETE ALL DATA?")) { localStorage.clear(); window.location.reload(); }}} className="text-red-400 text-sm hover:underline">Reset Everything</button></div></GlassCard>)}
       </div>

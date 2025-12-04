@@ -9,3 +9,15 @@ body {
   background-attachment: fixed;
   min-height: 100vh;
 }
+/* --- HIDE SCROLLBAR GLOBALLY --- */
+
+/* Chrome, Safari and Opera ke liye */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox, IE and Edge ke liye */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

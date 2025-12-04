@@ -10,25 +10,11 @@ import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-// --- IMPORT DATA FROM SEPARATE FILE ---
-import { INITIAL_STYLES } from './garmentData'; 
-
 // --- HELPER FUNCTIONS ---
 const toTitleCase = (str) => {
   return str.replace(/\w\S*/g, (txt) => {
     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
   });
-};
-
-const mergeStylesWithInitial = (currentStyles) => {
-  const merged = [...currentStyles];
-  INITIAL_STYLES.forEach(initStyle => {
-    const exists = merged.some(s => s.name.toLowerCase() === initStyle.name.toLowerCase());
-    if (!exists) {
-      merged.push({ ...initStyle, id: Date.now() + Math.random() });
-    }
-  });
-  return merged;
 };
 
 // --- HELPER COMPONENTS ---
@@ -173,10 +159,13 @@ const TabButton = ({ id, label, activeTab, setActiveTab, icon: Icon }) => (
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employees, setEmployees] = useState(() => JSON.parse(localStorage.getItem('gpms_employees')) || []);
+  
+  // UPDATED: Simply load from localStorage or default to empty array
   const [styles, setStyles] = useState(() => {
     const saved = JSON.parse(localStorage.getItem('gpms_styles'));
-    return saved ? mergeStylesWithInitial(saved) : INITIAL_STYLES;
+    return saved || [];
   });
+
   const [workLogs, setWorkLogs] = useState(() => JSON.parse(localStorage.getItem('gpms_workLogs')) || []);
   const [advances, setAdvances] = useState(() => JSON.parse(localStorage.getItem('gpms_advances')) || []);
   const [user, setUser] = useState(null); 
@@ -219,8 +208,31 @@ const App = () => {
 
   const handleGoogleLogin = async () => { try { await signInWithPopup(auth, googleProvider); } catch (error) { alert("Login Failed: " + error.message); } };
   const handleLogout = async () => { await signOut(auth); };
+  
   const uploadToCloud = async () => { if(!user) return alert("Login first!"); try { await setDoc(doc(db, "users", user.uid), { employees, styles, workLogs, advances, lastUpdated: new Date().toISOString() }); alert("✅ Uploaded!"); } catch (error) { alert("Failed: " + error.message); } };
-  const downloadFromCloud = async () => { if(!user) return alert("Please login first!"); if(!confirm("⚠️ Local data will be merged. Continue?")) return; try { const docSnap = await getDoc(doc(db, "users", user.uid)); if (docSnap.exists()) { const data = docSnap.data(); if(data.employees) setEmployees(data.employees); if(data.styles) setStyles(mergeStylesWithInitial(data.styles || [])); if(data.workLogs) setWorkLogs(data.workLogs); if(data.advances) setAdvances(data.advances); alert("✅ Merged & Restored!"); } else { alert("No Cloud data found."); } } catch (error) { alert("Download Failed: " + error.message); } };
+  
+  const downloadFromCloud = async () => { 
+    if(!user) return alert("Please login first!"); 
+    if(!confirm("⚠️ Local data will be merged. Continue?")) return; 
+    try { 
+      const docSnap = await getDoc(doc(db, "users", user.uid)); 
+      if (docSnap.exists()) { 
+        const data = docSnap.data(); 
+        if(data.employees) setEmployees(data.employees); 
+        
+        // UPDATED: No more mergeStylesWithInitial
+        if(data.styles) setStyles(data.styles || []); 
+        
+        if(data.workLogs) setWorkLogs(data.workLogs); 
+        if(data.advances) setAdvances(data.advances); 
+        alert("✅ Merged & Restored!"); 
+      } else { 
+        alert("No Cloud data found."); 
+      } 
+    } catch (error) { 
+      alert("Download Failed: " + error.message); 
+    } 
+  };
 
   const handleEnterKey = (e, action) => { if (e.key === 'Enter') { e.preventDefault(); action(); } };
   const handleTextChange = (setter) => (e) => { setter(toTitleCase(e.target.value)); };
@@ -248,7 +260,9 @@ const App = () => {
   const getSalaryReport = () => { return employees.map(emp => { const empLogs = workLogs.filter(log => log.empId === emp.id && log.date.startsWith(reportMonth)); const empAdv = advances.filter(adv => adv.empId === emp.id && adv.date.startsWith(reportMonth)); const totalWorkAmount = empLogs.reduce((sum, log) => sum + log.amount, 0); const totalAdvance = empAdv.reduce((sum, adv) => sum + adv.amount, 0); return { ...emp, totalPieces: empLogs.reduce((s, l) => s + l.pieces, 0), totalWorkAmount, totalAdvance, netSalary: totalWorkAmount - totalAdvance }; }); };
   const exportReportToPDF = () => { const doc = new jsPDF(); const reportData = getSalaryReport(); const monthName = new Date(reportMonth).toLocaleString('default', { month: 'long', year: 'numeric' }); doc.setFontSize(18); doc.text(`Salary Report - ${monthName}`, 14, 22); const tableRows = reportData.map(item => [item.name, item.totalPieces, item.totalWorkAmount.toFixed(2), item.totalAdvance.toFixed(2), item.netSalary.toFixed(2)]); autoTable(doc, { head: [["Name", "Pieces", "Work Amt", "Adv", "Net Pay"]], body: tableRows, startY: 40, theme: 'grid' }); doc.save(`Salary_${reportMonth}.pdf`); };
   const exportData = () => { const data = { employees, styles, workLogs, advances }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); const link = document.createElement('a'); link.href = url; link.download = `backup.json`; link.click(); };
-  const importData = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if(confirm("Overwrite?")) { setEmployees(data.employees||[]); setStyles(mergeStylesWithInitial(data.styles||[])); setWorkLogs(data.workLogs||[]); setAdvances(data.advances||[]); } } catch(err) { alert("Error"); } }; if(file) reader.readAsText(file); };
+  
+  // UPDATED: No more mergeStylesWithInitial
+  const importData = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if(confirm("Overwrite?")) { setEmployees(data.employees||[]); setStyles(data.styles||[]); setWorkLogs(data.workLogs||[]); setAdvances(data.advances||[]); } } catch(err) { alert("Error"); } }; if(file) reader.readAsText(file); };
 
   // --- ANALYTICS HELPER ---
   const getAnalyticsData = () => {

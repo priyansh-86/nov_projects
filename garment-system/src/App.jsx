@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, Scissors, ClipboardList, Plus, Trash2, FileText, TrendingDown, 
   Edit2, Check, X, PlusCircle, CalendarDays, Settings, Download, Upload, 
-  Save, Printer, Cloud, LogIn, LogOut, ChevronDown, ChevronUp, BarChart3
+  Save, Printer, Cloud, LogIn, LogOut, ChevronDown, ChevronUp, BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -159,22 +160,19 @@ const TabButton = ({ id, label, activeTab, setActiveTab, icon: Icon }) => (
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [employees, setEmployees] = useState(() => JSON.parse(localStorage.getItem('gpms_employees')) || []);
-  
-  // UPDATED: Simply load from localStorage or default to empty array
-  const [styles, setStyles] = useState(() => {
-    const saved = JSON.parse(localStorage.getItem('gpms_styles'));
-    return saved || [];
-  });
-
+  const [styles, setStyles] = useState(() => JSON.parse(localStorage.getItem('gpms_styles')) || []);
   const [workLogs, setWorkLogs] = useState(() => JSON.parse(localStorage.getItem('gpms_workLogs')) || []);
   const [advances, setAdvances] = useState(() => JSON.parse(localStorage.getItem('gpms_advances')) || []);
   const [user, setUser] = useState(null); 
 
+  // --- FORM STATE ---
   const [selectedEmp, setSelectedEmp] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedComponent, setSelectedComponent] = useState('');
   const [pieces, setPieces] = useState('');
   const [workMonth, setWorkMonth] = useState(new Date().toISOString().slice(0, 7)); 
+  const [editId, setEditId] = useState(null); // ID of the log being edited
+
   const [advEmp, setAdvEmp] = useState('');
   const [advAmount, setAdvAmount] = useState('');
   const [advDate, setAdvDate] = useState(new Date().toISOString().split('T')[0]);
@@ -219,10 +217,7 @@ const App = () => {
       if (docSnap.exists()) { 
         const data = docSnap.data(); 
         if(data.employees) setEmployees(data.employees); 
-        
-        // UPDATED: No more mergeStylesWithInitial
         if(data.styles) setStyles(data.styles || []); 
-        
         if(data.workLogs) setWorkLogs(data.workLogs); 
         if(data.advances) setAdvances(data.advances); 
         alert("✅ Merged & Restored!"); 
@@ -239,15 +234,64 @@ const App = () => {
 
   const addEmployee = () => { if (!newEmpName.trim()) return; setEmployees([...employees, { id: Date.now(), name: newEmpName }]); setNewEmpName(''); };
 
-  const addWorkEntry = () => {
+  // --- ADD OR UPDATE ENTRY ---
+  const handleWorkEntry = () => {
     if (!selectedEmp || !selectedStyle || !selectedComponent || !pieces) return;
+    
     const styleObj = styles.find(s => s.id === parseInt(selectedStyle));
     const rateObj = styleObj.rates.find(r => r.name === selectedComponent);
     const amount = parseInt(pieces) * rateObj.rate;
-    setWorkLogs([{ id: Date.now(), date: workMonth, empId: parseInt(selectedEmp), styleName: styleObj.name, component: selectedComponent, rate: rateObj.rate, pieces: parseInt(pieces), amount: amount }, ...workLogs]);
+
+    if (editId) {
+      // UPDATE EXISTING
+      setWorkLogs(workLogs.map(log => 
+        log.id === editId 
+          ? { ...log, date: workMonth, empId: parseInt(selectedEmp), styleName: styleObj.name, component: selectedComponent, rate: rateObj.rate, pieces: parseInt(pieces), amount: amount }
+          : log
+      ));
+      setEditId(null);
+    } else {
+      // ADD NEW
+      setWorkLogs([{ id: Date.now(), date: workMonth, empId: parseInt(selectedEmp), styleName: styleObj.name, component: selectedComponent, rate: rateObj.rate, pieces: parseInt(pieces), amount: amount }, ...workLogs]);
+    }
+    
+    // Clear inputs but keep some for faster entry if not editing
     setPieces(''); 
-    setSelectedComponent(''); 
+    if(editId) {
+      setSelectedComponent('');
+      setSelectedStyle('');
+      setSelectedEmp('');
+    } else {
+      setSelectedComponent(''); 
+    }
+    
     setTimeout(() => { if(operationInputRef.current) operationInputRef.current.focus(); }, 10);
+  };
+
+  const handleEditLog = (log) => {
+    setEditId(log.id);
+    setWorkMonth(log.date);
+    setSelectedEmp(log.empId);
+    
+    // Reverse lookup: Find Style ID based on Style Name in log
+    const styleFound = styles.find(s => s.name === log.styleName);
+    if(styleFound) {
+      setSelectedStyle(styleFound.id);
+    }
+    
+    setSelectedComponent(log.component);
+    setPieces(log.pieces);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setPieces('');
+    setSelectedComponent('');
+    setSelectedStyle('');
+    setSelectedEmp('');
   };
 
   const addAdvance = () => { if (!advEmp || !advAmount) return; setAdvances([{ id: Date.now(), date: advDate, empId: parseInt(advEmp), amount: parseFloat(advAmount) }, ...advances]); setAdvAmount(''); };
@@ -261,42 +305,21 @@ const App = () => {
   const exportReportToPDF = () => { const doc = new jsPDF(); const reportData = getSalaryReport(); const monthName = new Date(reportMonth).toLocaleString('default', { month: 'long', year: 'numeric' }); doc.setFontSize(18); doc.text(`Salary Report - ${monthName}`, 14, 22); const tableRows = reportData.map(item => [item.name, item.totalPieces, item.totalWorkAmount.toFixed(2), item.totalAdvance.toFixed(2), item.netSalary.toFixed(2)]); autoTable(doc, { head: [["Name", "Pieces", "Work Amt", "Adv", "Net Pay"]], body: tableRows, startY: 40, theme: 'grid' }); doc.save(`Salary_${reportMonth}.pdf`); };
   const exportData = () => { const data = { employees, styles, workLogs, advances }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" })); const link = document.createElement('a'); link.href = url; link.download = `backup.json`; link.click(); };
   
-  // UPDATED: No more mergeStylesWithInitial
   const importData = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if(confirm("Overwrite?")) { setEmployees(data.employees||[]); setStyles(data.styles||[]); setWorkLogs(data.workLogs||[]); setAdvances(data.advances||[]); } } catch(err) { alert("Error"); } }; if(file) reader.readAsText(file); };
 
   // --- ANALYTICS HELPER ---
   const getAnalyticsData = () => {
     if (!analyticsStyle || !analyticsOperation) return { total: 0, breakdown: [] };
-    
-    // Find Style Name from ID
     const targetStyleName = styles.find(s => s.id === analyticsStyle)?.name;
-
-    const filtered = workLogs.filter(log => 
-      log.date.startsWith(analyticsMonth) &&
-      log.styleName === targetStyleName &&
-      log.component === analyticsOperation
-    );
-    
+    const filtered = workLogs.filter(log => log.date.startsWith(analyticsMonth) && log.styleName === targetStyleName && log.component === analyticsOperation);
     const total = filtered.reduce((sum, log) => sum + log.pieces, 0);
-    
-    // Aggregate by employee
     const empMap = {};
-    filtered.forEach(log => {
-      if (!empMap[log.empId]) empMap[log.empId] = 0;
-      empMap[log.empId] += log.pieces;
-    });
-    
-    const breakdown = Object.entries(empMap).map(([empId, pcs]) => ({
-      name: employees.find(e => e.id === parseInt(empId))?.name || 'Unknown',
-      pieces: pcs
-    })).sort((a, b) => b.pieces - a.pieces);
-    
+    filtered.forEach(log => { if (!empMap[log.empId]) empMap[log.empId] = 0; empMap[log.empId] += log.pieces; });
+    const breakdown = Object.entries(empMap).map(([empId, pcs]) => ({ name: employees.find(e => e.id === parseInt(empId))?.name || 'Unknown', pieces: pcs })).sort((a, b) => b.pieces - a.pieces);
     return { total, breakdown };
   };
 
   const operationOptions = selectedStyle ? styles.find(s => s.id === parseInt(selectedStyle))?.rates.map(r => ({ id: r.name, name: `${r.name} - ₹${r.rate.toFixed(2)}` })) || [] : [];
-  
-  // Analytics Operations (Just Names)
   const analyticsOpOptions = analyticsStyle ? styles.find(s => s.id === analyticsStyle)?.rates.map(r => ({ id: r.name, name: r.name })) || [] : [];
 
   return (
@@ -312,7 +335,10 @@ const App = () => {
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <GlassCard className="h-fit">
-              <h2 className="text-xl font-semibold mb-6 flex items-center text-blue-200"><PlusCircle className="mr-2" /> New Entry</h2>
+              <h2 className="text-xl font-semibold mb-6 flex items-center justify-between text-blue-200">
+                <span className="flex items-center"><PlusCircle className="mr-2" /> {editId ? "Update Entry" : "New Entry"}</span>
+                {editId && <button onClick={cancelEdit} className="text-xs text-red-300 hover:text-red-200 bg-red-500/20 px-2 py-1 rounded">Cancel Edit</button>}
+              </h2>
               <div className="space-y-4">
                 <div><label className="text-gray-400 text-xs ml-1 mb-1 block">Production Month</label><GlassInput type="month" value={workMonth} onChange={(e) => setWorkMonth(e.target.value)} /></div>
                 
@@ -337,39 +363,48 @@ const App = () => {
                   placeholder="Pieces Made" 
                   value={pieces} 
                   onChange={(e) => setPieces(e.target.value)}
-                  onKeyDown={(e) => handleEnterKey(e, addWorkEntry)} 
+                  onKeyDown={(e) => handleEnterKey(e, handleWorkEntry)} 
                 />
-                <button onClick={addWorkEntry} className="w-full bg-blue-600 text-white py-2 rounded-lg">Save Entry</button>
+                <button onClick={handleWorkEntry} className={`w-full text-white py-2 rounded-lg font-bold transition-all ${editId ? 'bg-orange-600 hover:bg-orange-500' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                  {editId ? "Update Entry" : "Save Entry"}
+                </button>
               </div>
             </GlassCard>
             
-            <GlassCard className="lg:col-span-2">
-              <h2 className="text-xl font-semibold mb-4 text-gray-200">Recent Logs</h2>
-              <div className="overflow-x-auto">
+            <GlassCard className="lg:col-span-2 flex flex-col max-h-[600px]">
+              <h2 className="text-xl font-semibold mb-4 text-gray-200 flex justify-between items-center">
+                <span>Recent Logs</span>
+                <span className="text-xs font-normal text-gray-400 bg-white/5 px-2 py-1 rounded">Total: {workLogs.length}</span>
+              </h2>
+              {/* SCROLLABLE CONTAINER FOR INFINITE SCROLL */}
+              <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
                 <table className="w-full text-left text-sm text-gray-300">
-                  <thead className="bg-white/5 text-gray-200">
+                  <thead className="bg-white/5 text-gray-200 sticky top-0 backdrop-blur-md z-10">
                     <tr>
                       <th className="p-3">Month</th>
                       <th className="p-3">Employee</th>
                       <th className="p-3">Style</th>
                       <th className="p-3 text-right">Pcs</th>
-                      <th className="p-3 text-right">Amount</th>
-                      <th className="p-3 text-center">Action</th>
+                      <th className="p-3 text-right">Amt</th>
+                      <th className="p-3 text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
                     {workLogs.length === 0 ? (
                       <tr><td colSpan="6" className="p-4 text-center opacity-50">No data found</td></tr>
                     ) : (
-                      workLogs.slice(0, 10).map(log => (
-                        <tr key={log.id} className="hover:bg-white/5 transition">
+                      workLogs.map(log => (
+                        <tr key={log.id} className={`hover:bg-white/5 transition group ${editId === log.id ? 'bg-orange-500/10 border-l-2 border-orange-500' : ''}`}>
                           <td className="p-3 flex items-center gap-2"><CalendarDays size={14} className="text-blue-400"/>{log.date}</td>
                           <td className="p-3 text-white font-medium">{employees.find(e => e.id === log.empId)?.name}</td>
                           <td className="p-3 opacity-80">{log.styleName} - {log.component}</td>
                           <td className="p-3 text-right">{log.pieces}</td>
                           <td className="p-3 text-right text-green-400 font-semibold">₹{log.amount.toFixed(2)}</td>
-                          <td className="p-3 text-center">
-                            <button onClick={() => setWorkLogs(workLogs.filter(l => l.id !== log.id))} className="text-red-400 hover:text-red-300 hover:bg-red-400/20 p-1 rounded">
+                          <td className="p-3 text-center flex justify-center gap-2">
+                            <button onClick={() => handleEditLog(log)} className="text-blue-400 hover:text-white p-1 hover:bg-blue-500 rounded transition" title="Edit">
+                              <Edit2 size={16} />
+                            </button>
+                            <button onClick={() => setWorkLogs(workLogs.filter(l => l.id !== log.id))} className="text-red-400 hover:text-white p-1 hover:bg-red-500 rounded transition" title="Delete">
                               <Trash2 size={16} />
                             </button>
                           </td>
@@ -383,7 +418,7 @@ const App = () => {
           </div>
         )}
 
-        {/* --- ANALYTICS TAB (NEW FEATURE) --- */}
+        {/* --- ANALYTICS TAB --- */}
         {activeTab === 'analytics' && (
           <GlassCard>
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-white/10 pb-6">
@@ -418,7 +453,6 @@ const App = () => {
 
             {analyticsStyle && analyticsOperation && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* STATS CARD */}
                 <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 p-6 rounded-xl mb-8 flex justify-between items-center">
                    <div>
                       <h3 className="text-blue-300 text-sm font-semibold uppercase tracking-wider mb-1">Total Output</h3>
@@ -429,8 +463,6 @@ const App = () => {
                       <div className="text-white font-medium">{styles.find(s=>s.id===analyticsStyle)?.name}</div>
                    </div>
                 </div>
-
-                {/* BREAKDOWN TABLE */}
                 <h3 className="text-lg font-bold text-gray-200 mb-4">Employee Breakdown</h3>
                 <div className="grid gap-3">
                   {getAnalyticsData().breakdown.map((item, idx) => (
@@ -442,27 +474,21 @@ const App = () => {
                           <span className="font-medium text-white">{item.name}</span>
                        </div>
                        <div className="flex items-center gap-4">
-                          {/* Mini Bar Chart Visual */}
                           <div className="w-24 h-2 bg-gray-700 rounded-full hidden sm:block overflow-hidden">
-                             <div 
-                               className="h-full bg-blue-500 rounded-full" 
-                               style={{ width: `${(item.pieces / getAnalyticsData().total) * 100}%` }}
-                             ></div>
+                             <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(item.pieces / getAnalyticsData().total) * 100}%` }}></div>
                           </div>
                           <span className="font-bold text-blue-300 w-16 text-right">{item.pieces} pcs</span>
                        </div>
                     </div>
                   ))}
-                  {getAnalyticsData().breakdown.length === 0 && (
-                    <div className="text-center p-8 text-gray-500">No production data found for this selection.</div>
-                  )}
+                  {getAnalyticsData().breakdown.length === 0 && (<div className="text-center p-8 text-gray-500">No production data found for this selection.</div>)}
                 </div>
               </div>
             )}
           </GlassCard>
         )}
 
-        {/* --- OTHER TABS (Keep them as is) --- */}
+        {/* --- OTHER TABS --- */}
         {activeTab === 'employees' && (<GlassCard><div className="flex gap-4 mb-6 justify-center"><GlassInput value={newEmpName} onChange={handleTextChange(setNewEmpName)} onKeyDown={(e) => handleEnterKey(e, addEmployee)} placeholder="New Employee Name" className="max-w-md" /><button onClick={addEmployee} className="bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg">Add</button></div><div className="grid gap-2 max-w-2xl mx-auto">{employees.map(e => <div key={e.id} className="p-3 bg-white/5 rounded flex justify-between text-gray-300"><span>{e.name}</span><span className="opacity-50 text-xs">#{e.id}</span></div>)}</div></GlassCard>)}
         {activeTab === 'advances' && (<div className="grid md:grid-cols-2 gap-6"><GlassCard><h2 className="text-lg font-bold text-red-300 mb-4">Add Advance</h2><div className="space-y-4"><GlassInput type="date" value={advDate} onChange={e => setAdvDate(e.target.value)} /><GlassSelect value={advEmp} onChange={e => setAdvEmp(e.target.value)}><option value="">Select Employee</option>{employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</GlassSelect><GlassInput type="number" placeholder="Amount" value={advAmount} onChange={e => setAdvAmount(e.target.value)} onKeyDown={(e) => handleEnterKey(e, addAdvance)} /><button onClick={addAdvance} className="w-full bg-red-600/80 hover:bg-red-500 text-white py-2 rounded-lg">Save</button></div></GlassCard><GlassCard><h2 className="text-lg font-bold text-gray-300 mb-4">History</h2><div className="space-y-2 max-h-64 overflow-y-auto">{advances.map(a => (<div key={a.id} className="flex justify-between p-2 border-b border-white/10 text-sm"><span className="text-gray-400">{a.date} - {employees.find(e=>e.id===a.empId)?.name}</span><span className="text-red-400 font-mono">-₹{a.amount}</span></div>))}</div></GlassCard></div>)}
         {activeTab === 'reports' && (
@@ -489,55 +515,15 @@ const App = () => {
                 <tbody className="divide-y divide-white/10">
                   {getSalaryReport().map(d => (
                     <React.Fragment key={d.id}>
-                      <tr 
-                        onClick={() => setExpandedReportRow(expandedReportRow === d.id ? null : d.id)}
-                        className={`cursor-pointer hover:bg-white/5 transition ${expandedReportRow === d.id ? 'bg-white/5' : ''}`}
-                      >
-                        <td className="p-3 font-medium text-white flex items-center gap-2">
-                          {expandedReportRow === d.id ? <ChevronUp size={16} className="text-blue-400"/> : <ChevronDown size={16} className="text-gray-500"/>}
-                          {d.name}
-                        </td>
+                      <tr onClick={() => setExpandedReportRow(expandedReportRow === d.id ? null : d.id)} className={`cursor-pointer hover:bg-white/5 transition ${expandedReportRow === d.id ? 'bg-white/5' : ''}`}>
+                        <td className="p-3 font-medium text-white flex items-center gap-2">{expandedReportRow === d.id ? <ChevronUp size={16} className="text-blue-400"/> : <ChevronDown size={16} className="text-gray-500"/>}{d.name}</td>
                         <td className="p-3 text-center"><span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-1 rounded">{d.totalPieces}</span></td>
                         <td className="p-3 text-right text-gray-300">₹{d.totalWorkAmount.toFixed(2)}</td>
                         <td className="p-3 text-right text-red-400">-₹{d.totalAdvance.toFixed(2)}</td>
                         <td className="p-3 text-right font-bold text-green-400 text-lg">₹{d.netSalary.toFixed(2)}</td>
                       </tr>
-                      
-                      {/* --- EXPANDED DETAILS ROW --- */}
                       {expandedReportRow === d.id && (
-                        <tr>
-                          <td colSpan="5" className="p-0">
-                            <div className="bg-slate-900/50 p-4 border-y border-white/10 inset-shadow">
-                              <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Detailed Work Logs ({reportMonth})</h4>
-                              <table className="w-full text-xs text-gray-400">
-                                <thead className="border-b border-white/5 text-gray-500">
-                                  <tr>
-                                    <th className="py-1">Date</th>
-                                    <th className="py-1">Style</th>
-                                    <th className="py-1">Operation</th>
-                                    <th className="py-1 text-right">Rate</th>
-                                    <th className="py-1 text-right">Pcs</th>
-                                    <th className="py-1 text-right">Amt</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {workLogs
-                                    .filter(log => log.empId === d.id && log.date.startsWith(reportMonth))
-                                    .map(log => (
-                                      <tr key={log.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
-                                        <td className="py-1">{log.date}</td>
-                                        <td className="py-1 text-blue-300">{log.styleName}</td>
-                                        <td className="py-1 text-white">{log.component}</td>
-                                        <td className="py-1 text-right">₹{log.rate}</td>
-                                        <td className="py-1 text-right">{log.pieces}</td>
-                                        <td className="py-1 text-right font-medium text-green-500">₹{log.amount.toFixed(2)}</td>
-                                      </tr>
-                                    ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
+                        <tr><td colSpan="5" className="p-0"><div className="bg-slate-900/50 p-4 border-y border-white/10 inset-shadow"><h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Detailed Work Logs ({reportMonth})</h4><table className="w-full text-xs text-gray-400"><thead className="border-b border-white/5 text-gray-500"><tr><th className="py-1">Date</th><th className="py-1">Style</th><th className="py-1">Operation</th><th className="py-1 text-right">Rate</th><th className="py-1 text-right">Pcs</th><th className="py-1 text-right">Amt</th></tr></thead><tbody>{workLogs.filter(log => log.empId === d.id && log.date.startsWith(reportMonth)).map(log => (<tr key={log.id} className="border-b border-white/5 last:border-0 hover:bg-white/5"><td className="py-1">{log.date}</td><td className="py-1 text-blue-300">{log.styleName}</td><td className="py-1 text-white">{log.component}</td><td className="py-1 text-right">₹{log.rate}</td><td className="py-1 text-right">{log.pieces}</td><td className="py-1 text-right font-medium text-green-500">₹{log.amount.toFixed(2)}</td></tr>))}</tbody></table></div></td></tr>
                       )}
                     </React.Fragment>
                   ))}

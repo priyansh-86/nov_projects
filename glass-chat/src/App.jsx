@@ -82,9 +82,13 @@ const Home = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-6">
              {/* Logo Placeholder - You can use your <img src="/logo.png" ... /> here */}
-             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-400 to-purple-500 flex items-center justify-center shadow-lg border-4 border-white/10">
-                <ShieldCheck className="w-10 h-10 text-white" />
-             </div>
+<div className="inline-flex items-center justify-center mb-6">
+    <img 
+      src="/logo.png" 
+      alt="App Logo" 
+      className="w-24 h-24 rounded-full object-cover border-4 border-white/10 shadow-2xl drop-shadow-lg animate-blob" 
+    />
+  </div>
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-pink-200">Glass Chat</h1>
           <p className="text-gray-400 text-sm mt-2">Realtime Presence • Secure</p>
@@ -373,9 +377,17 @@ const ChatRoom = () => {
       <header className="glass h-16 px-4 flex items-center justify-between shrink-0 z-10 m-2 rounded-2xl">
         <div className="flex items-center gap-3">
           {/* Header Logo - Replace with <img src="/logo.png" ... /> */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
-             <ShieldCheck className="w-5 h-5"/>
-          </div>
+<div className="relative">
+      <img 
+        src="/logo.png" 
+        alt="Logo" 
+        className="w-10 h-10 rounded-full object-cover border-2 border-white/20 shadow-lg"
+      />
+      {/* Online Dot (Optional: Agar logo ke upar dot dikhana hai toh) */}
+      <div className="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-0.5">
+          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse border-2 border-gray-900"></div>
+      </div>
+    </div>
           <div>
             <h2 className="font-bold text-white">Secure Channel</h2>
             <div className="flex items-center gap-3 text-[10px] text-gray-300">

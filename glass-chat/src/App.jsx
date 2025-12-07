@@ -79,7 +79,13 @@ const Home = () => {
       <AnimatedBackground />
       <div className="glass rounded-2xl p-8 w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-4 ring-1 ring-white/30"><ShieldCheck className="w-8 h-8 text-blue-300" /></div>
+          <div className="inline-flex items-center justify-center mb-6">
+    <img 
+      src="/logo.png" 
+      alt="App Logo" 
+      className="w-24 h-24 rounded-full object-cover border-4 border-white/10 shadow-2xl drop-shadow-lg animate-blob" 
+    />
+  </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-pink-200">Glass Chat</h1>
           <p className="text-gray-400 text-sm mt-2">Realtime Presence • Secure</p>
         </div>
